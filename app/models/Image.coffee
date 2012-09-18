@@ -1,0 +1,1 @@
+module.exports = class Image extends Backbone.Model

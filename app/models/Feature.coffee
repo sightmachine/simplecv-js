@@ -1,0 +1,1 @@
+module.exports = class Feature extends Backbone.Model

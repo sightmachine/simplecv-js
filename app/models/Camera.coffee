@@ -1,0 +1,1 @@
+module.exports = class Camera extends Backbone.Model
