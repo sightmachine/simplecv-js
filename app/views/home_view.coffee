@@ -25,28 +25,27 @@ module.exports = class HomeView extends View
         c = new Camera();
         c.init(=>
           setInterval(=>
-            i = c.getImage().saturate()
+            i = c.getImage()
+            i = i.scale(.5)
+            i = i.saturate()
+            i.show(one)
             
             # Drawing is not recommended on a
             # huge frame rate. It takes a toll
             # on the CPU with all the garbage
             # collection and dom creation.
-            
-            
             # i.addDl(d)
-            
+            # must be done before i is drawn
             #d = i.addDrawingLayer()
             #d.fill(204, 102, 0)
             #d.rect(10,10,30,30)
               
-            i.show(one)
-            
             g = i.grayscale()
             g.show(two)
             
-            b = g.binarize()
+            b = g.binarize(60)
             b.show(three)
-          , 1000/30)
+          , 1000/60)
         )
         
     )

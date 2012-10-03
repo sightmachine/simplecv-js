@@ -93,10 +93,22 @@ module.exports = class Image extends Backbone.Model
         a++
     return result
   
+  # Simple image scale. Uses canvas to get this done
+  # quickly. Returns a new image.
+  scale:(factor) =>
+    scaled = document.createElement("canvas")
+    scaled.width = @width*factor
+    scaled.height = @height*factor
+    ctx = scaled.getContext("2d")
+    ctx.drawImage(@canvas, 0, 0, @width*factor, @height*factor)
+    return new Image(scaled)
+  
   # Simple image crop. Uses canvas to get this done
   # quickly. Returns a new image.
   crop:(x, y, width, height) =>
     cropped = document.createElement("canvas")
+    cropped.width = width
+    cropped.height = height
     ctx = cropped.getContext("2d")
     ctx.drawImage(@canvas, x, y, width, height, 0, 0, width, height)
     return new Image(cropped)
@@ -119,9 +131,9 @@ module.exports = class Image extends Backbone.Model
   saturate:(factor=250/170) =>
     matrix = @getMatrix(false); i = 0;
     while i < matrix.data.length
-      matrix.data[i] -= 75; matrix.data[i] *= factor
-      matrix.data[i+1] -= 75; matrix.data[i+1] *= factor
-      matrix.data[i+2] -= 75; matrix.data[i+2] *= factor
+      matrix.data[i] -= 50; matrix.data[i] *= factor
+      matrix.data[i+1] -= 50; matrix.data[i+1] *= factor
+      matrix.data[i+2] -= 50; matrix.data[i+2] *= factor
       i += 4
     image = new Image(matrix)
     return image
@@ -137,7 +149,6 @@ module.exports = class Image extends Backbone.Model
       i += 4
     image = new Image(matrix)
     return image
-
 
   # Alias to the cv.js library's binarize function.
   # We pass in our image and give it a threshold.
