@@ -33,8 +33,6 @@ module.exports = class Camera extends Backbone.Model
     canvas = document.createElement("canvas")
     canvas.width = @video.width
     canvas.height = @video.height
-    ctx = canvas.getContext "2d"
-    ctx.drawImage(@video, 0, 0)
-    
-    image = new Image(canvas)
-    return image
+    ctx = canvas.getContext("2d")
+    ctx.drawImage(@video, @width, 0, -@width, @height)
+    return new Image(canvas)

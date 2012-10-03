@@ -78,20 +78,26 @@ module.exports = class Image extends Backbone.Model
     return @canvas.toDataURL()
    
   # Returns the image in a two dimensional array format
-  # where each pixel is structured as [r, g, b, a].
-  getMatrix:(safe=true) =>
+  # where each pixel is structured as [r, g, b].
+  getNumpy: =>
     result = []; x = [];
-    pixels = @ctx.getImageData(0,0,@width,@height)
-    if(safe == false) then return pixels
+    matrix = @ctx.getImageData(0,0,@width,@height)
     i = 0; a = 1;
-    while i < pixels.data.length
-      x.push [pixels.data[i], pixels.data[i + 1], pixels.data[i + 2]]    
+    while i < matrix.data.length
+      x.push [matrix.data[i], matrix.data[i + 1], matrix.data[i + 2]]    
       i += 4
       if a is @width
         result.push x; x = []; a = 1
       else
         a++
     return result
+  
+  # Returns the image in a single dimensional array format
+  # where the pixels go in r, g, b, a order.
+  getMatrix:() =>
+    result = []; x = [];
+    matrix = @ctx.getImageData(0,0,@width,@height)
+    return matrix
   
   # Simple image scale. Uses canvas to get this done
   # quickly. Returns a new image.
@@ -113,11 +119,33 @@ module.exports = class Image extends Backbone.Model
     ctx.drawImage(@canvas, x, y, width, height, 0, 0, width, height)
     return new Image(cropped)
   
+  # Simple horizontal flip. Uses canvas to get this
+  # done more efficiently than looping through the
+  # pixels.
+  flipHorizontal:() =>
+    flipped = document.createElement("canvas")
+    flipped.width = @width
+    flipped.height = @height
+    ctx = flipped.getContext("2d")
+    ctx.drawImage(@canvas, @width, 0, -@width, @height)
+    return new Image(flipped)
+  
+  # Simple horizontal flip. Uses canvas to get this
+  # done more efficiently than looping through the
+  # pixels.
+  flipVertical:() =>
+    flipped = document.createElement("canvas")
+    flipped.width = @width
+    flipped.height = @height
+    ctx = flipped.getContext("2d")
+    ctx.drawImage(@canvas, 0, @height, @width, -@height)
+    return new Image(flipped)   
+  
   # Simple subtract algorithm to find the difference
   # between two images.
   subtract:(image) =>
-    matrixOne = @getMatrix(false); matrixTwo = image.getMatrix(false); i = 0;
-    while i < matrix.data.length
+    matrixOne = @getMatrix(); matrixTwo = image.getMatrix(); i = 0;
+    while i < matrixOne.data.length
       matrixTwo.data[i] -= matrixOne.data[i];
       matrixTwo.data[i+1] -= matrixOne.data[i+1];
       matrixTwo.data[i+2] -= matrixOne.data[i+2];
@@ -129,7 +157,7 @@ module.exports = class Image extends Backbone.Model
   # in the image. First subtracts a grey level and
   # then multiplies by a factor.
   saturate:(factor=250/170) =>
-    matrix = @getMatrix(false); i = 0;
+    matrix = @getMatrix(); i = 0;
     while i < matrix.data.length
       matrix.data[i] -= 50; matrix.data[i] *= factor
       matrix.data[i+1] -= 50; matrix.data[i+1] *= factor
@@ -141,8 +169,8 @@ module.exports = class Image extends Backbone.Model
   # Simple grayscale algorithm. Had to create our
   # own because the cv.js library actually down-
   # samples the image by 4x.
-  grayscale:(threshold=128) =>
-    matrix = @getMatrix(false); i = 0;
+  grayscale:() =>
+    matrix = @getMatrix(); i = 0;
     while i < matrix.data.length
       avg = (matrix.data[i] + matrix.data[i+1] + matrix.data[i+2]) / 3
       matrix.data[i] = matrix.data[i+1] = matrix.data[i+2] = avg
@@ -153,6 +181,6 @@ module.exports = class Image extends Backbone.Model
   # Alias to the cv.js library's binarize function.
   # We pass in our image and give it a threshold.
   binarize:(threshold=128, otsu=false) =>
-    matrix = @getMatrix(false)
+    matrix = @getMatrix()
     if otsu is true then threshold = CV.otsu(matrix); console.log(otsu)
     return new Image(CV.threshold(matrix, matrix, threshold))
