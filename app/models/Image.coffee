@@ -2,6 +2,7 @@ module.exports = class Image extends Backbone.Model
   parent = null
   canvas = null
   ctx = null
+  imgdata = null
   
   width = 0
   height = 0
@@ -12,26 +13,29 @@ module.exports = class Image extends Backbone.Model
   # and array form. 
   initialize:(data) =>
     @canvas = document.createElement("canvas")
-    @ctx = @canvas.getContext("2d")
     @layers = []
     
     if data instanceof HTMLCanvasElement
-        @canvas = data
-        @width = data.width
-        @height = data.height
-        @matrix = @getMatrix()
-        
+      @canvas = data
+      @width = data.width
+      @height = data.height
+      @ctx = @canvas.getContext("2d")
+
+    else if data instanceof ImageData
+      @canvas.width = @width = data.width
+      @canvas.height = @height = data.height
+      @ctx = @canvas.getContext("2d")
+      @ctx.putImageData(data, 0, 0)
+      @imgdata = data
+
     else if data instanceof HTMLImageElement
-        @matrix = data
-        @height = data.length
-        @width = data[0].length
-        @canvas.putImageData(data, 0, 0)
-        
-    else if data instanceof Array
-        @canvas.width = @width = data.width
-        @canvas.height = @height = data.height
-        @ctx.drawImage(data, 0, 0)
-        @matrix = @getMatrix()
+      @canvas.width = @width = data.width
+      @canvas.height = @height = data.height
+      @ctx = @canvas.getContext("2d")
+      @ctx.drawImage(data, 0, 0)
+      
+    else
+      #throw new Error "Unknown Image format \""+data.constructor+", try again"
   
   # Appends the canvas to parent element.
   # Defaults to appending it to the body.
@@ -78,12 +82,77 @@ module.exports = class Image extends Backbone.Model
    
   # Returns the image in a two dimensional array format
   # where each pixel is structured as [r, g, b, a].
-  getMatrix:() =>
-    return @ctx.createImageData(@width, @height);
+  getMatrix:(safe=true) =>
+    result = []; x = [];
+    pixels = @ctx.getImageData(0,0,@width,@height)
+    
+    if(safe == false) then return pixels
+     
+    i = 0; a = 1
+    while i < pixels.data.length
+      x.push [pixels.data[i], pixels.data[i + 1], pixels.data[i + 2]]    
+      i += 4
+
+      if a is @width
+        result.push x
+        x = []
+        a = 1
+      else
+        a++
+
+    return result
   
-  # Alias call to cv.js' threshold function which converts
-  # the image into black and white based upon the specified
-  # threshold that defaults to a middle value.
-  binarize:(threshold=128) =>
-    image = new Image(CV.threshold(@getMatrix(), threshold))
+  # Simple subtract algorithm to find the difference
+  # between two images.
+  subtract:(image) =>
+    matrixOne = @getMatrix(false)
+    matrixTwo = image.getMatrix(false)
+    
+    i = 0;
+    while i < matrix.data.length
+      matrixTwo.data[i] -= matrixOne.data[i];
+      matrixTwo.data[i+1] -= matrixOne.data[i+1];
+      matrixTwo.data[i+2] -= matrixOne.data[i+2];
+      i += 4
+      
+    image = new Image(matrixTwo)
+    return image    
+  
+  # Simple multiply algorithm to increase saturation
+  # in the image. First subtracts a grey level and
+  # then multiplies by a factor.
+  saturate:(factor=250/170) =>
+    matrix = @getMatrix(false)
+    
+    i = 0;
+    while i < matrix.data.length
+      matrix.data[i] -= 75; matrix.data[i] *= factor
+      matrix.data[i+1] -= 75; matrix.data[i+1] *= factor
+      matrix.data[i+2] -= 75; matrix.data[i+2] *= factor
+      i += 4
+      
+    image = new Image(matrix)
     return image
+  
+  # Simple grayscale algorithm. Had to create our
+  # own because the cv.js library actually down-
+  # samples the image by 4x.
+  grayscale:(threshold=128) =>
+    matrix = @getMatrix(false)
+    
+    i = 0;
+    while i < matrix.data.length
+      avg = (matrix.data[i] + matrix.data[i+1] + matrix.data[i+2]) / 3
+      matrix.data[i] = matrix.data[i+1] = matrix.data[i+2] = avg
+      i += 4
+      
+    image = new Image(matrix)
+    return image
+
+
+  # Alias to the cv.js library's binarize function.
+  # We pass in our image and give it a threshold.
+  binarize:(threshold=128, otsu=false) =>
+    matrix = @getMatrix(false)
+    if otsu is true then threshold = CV.otsu(matrix); console.log(otsu)
+    return new Image(CV.threshold(matrix, matrix, threshold))

@@ -1,6 +1,7 @@
 Image = require './Image'
 
 module.exports = class Camera extends Backbone.Model
+  load: null
   stream: null
   video: null
   
@@ -14,12 +15,13 @@ module.exports = class Camera extends Backbone.Model
 
   onLoad:() =>
     
-  init:() =>
+  init:(callback) =>
+    @load = callback
     navigator.webkitGetUserMedia({video: true, audio: true}, @onUserMediaSuccess)
 
   onUserMediaSuccess:(stream) =>
     @video.src = window.webkitURL.createObjectURL(stream)
-    @onLoad();
+    setTimeout(@load, 700)
     
   onUserMediaError:(error) =>
     console.log("Failed to initialize video stream. Error: #{error}");
