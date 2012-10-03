@@ -75,7 +75,9 @@ module.exports = class Image extends Backbone.Model
   # canvas and applying native canvas transformations
   # on it.
   getImage:() =>
-    return @canvas.toDataURL()
+    image = document.createElement("image")
+    image.src = @canvas.toDataURL()
+    return image
    
   # Returns the image in a two dimensional array format
   # where each pixel is structured as [r, g, b].
@@ -117,29 +119,7 @@ module.exports = class Image extends Backbone.Model
     cropped.height = height
     ctx = cropped.getContext("2d")
     ctx.drawImage(@canvas, x, y, width, height, 0, 0, width, height)
-    return new Image(cropped)
-  
-  # Simple horizontal flip. Uses canvas to get this
-  # done more efficiently than looping through the
-  # pixels.
-  flipHorizontal:() =>
-    flipped = document.createElement("canvas")
-    flipped.width = @width
-    flipped.height = @height
-    ctx = flipped.getContext("2d")
-    ctx.drawImage(@canvas, @width, 0, -@width, @height)
-    return new Image(flipped)
-  
-  # Simple horizontal flip. Uses canvas to get this
-  # done more efficiently than looping through the
-  # pixels.
-  flipVertical:() =>
-    flipped = document.createElement("canvas")
-    flipped.width = @width
-    flipped.height = @height
-    ctx = flipped.getContext("2d")
-    ctx.drawImage(@canvas, 0, @height, @width, -@height)
-    return new Image(flipped)   
+    return new Image(cropped)   
   
   # Simple subtract algorithm to find the difference
   # between two images.
@@ -156,7 +136,7 @@ module.exports = class Image extends Backbone.Model
   # Simple multiply algorithm to increase saturation
   # in the image. First subtracts a grey level and
   # then multiplies by a factor.
-  saturate:(factor=250/170) =>
+  saturate:(factor=250/200) =>
     matrix = @getMatrix(); i = 0;
     while i < matrix.data.length
       matrix.data[i] -= 50; matrix.data[i] *= factor

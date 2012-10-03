@@ -45,7 +45,6 @@ module.exports = class HomeView extends View
             #d.rect(10,10,30,30)
               
             g = i.grayscale()
-            g = g.flipHorizontal()
             g.show(two)
             
             b = g.binarize(60)
@@ -60,7 +59,7 @@ module.exports = class HomeView extends View
               f.show(four)
             
             h = i
-          , 1000/30)
+          , 1000/60)
         )
         
     )
