@@ -1,5 +1,6 @@
 View = require './view'
 Camera = require '../models/Camera'
+CVImage = require '../models/Image'
 template = require './templates/home'
 
 module.exports = class HomeView extends View
@@ -8,26 +9,44 @@ module.exports = class HomeView extends View
   
   initialize: =>
     $(=>
-        $('<div id="one"></div>').appendTo($("body"));
-        $('<div id="onehalf"></div>').appendTo($("body"));
-        $('<div id="two"></div>').appendTo($("body"));
-        $('<div id="three"></div>').appendTo($("body"));
-        $("#one, #onehalf, #two, #three").css("display", "inline-block")
+        body = $("body")
+        one = $('<div class="cvImage"></div>').appendTo(body)
+        two = $('<div class="cvImage"></div>').appendTo(body)
+        three = $('<div class="cvImage"></div>').appendTo(body)
         
+        """
+        imageFile = $("<img/>").attr("src", "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSZIGwNZEDfyuO3VzbpaDb71l8nVgqsUTGkt_h4QcItRgP_GpkUYg").get(0)
+        imageFile.onload = =>
+          i = new CVImage(imageFile)
+          i.binarize()
+          i.show(one)
+        """
+
         c = new Camera();
         c.init(=>
           setInterval(=>
-            i = c.getImage();
-            i.show($("#one"));
+            i = c.getImage().saturate()
             
-            s = i.saturate();
-            s.show($("#onehalf"));
+            # Drawing is not recommended on a
+            # huge frame rate. It takes a toll
+            # on the CPU with all the garbage
+            # collection and dom creation.
             
-            g = s.grayscale();
-            g.show($("#two"));
             
-            b = g.binarize();
-            b.show($("#three"));
-          , 1000/60)
+            # i.addDl(d)
+            
+            #d = i.addDrawingLayer()
+            #d.fill(204, 102, 0)
+            #d.rect(10,10,30,30)
+              
+            i.show(one)
+            
+            g = i.grayscale()
+            g.show(two)
+            
+            b = g.binarize()
+            b.show(three)
+          , 1000/30)
         )
+        
     )
