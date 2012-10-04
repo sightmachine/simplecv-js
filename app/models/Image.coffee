@@ -1,3 +1,10 @@
+Color = require './Color'
+
+# The Image model allows you to pass in a Canvas,
+# HTMLImageElement, or an ImageData object and store
+# that information in a universal format. The data
+# is always passed in to a Canvas and the data can
+# be retrieved by the methods show and getArray.
 module.exports = class Image extends Backbone.Model
   parent = null
   canvas = null
@@ -81,7 +88,7 @@ module.exports = class Image extends Backbone.Model
    
   # Returns the image in a two dimensional array format
   # where each pixel is structured as [r, g, b].
-  getNumpy: =>
+  getMatrix: =>
     result = []; x = [];
     matrix = @ctx.getImageData(0,0,@width,@height)
     i = 0; a = 1;
@@ -96,8 +103,7 @@ module.exports = class Image extends Backbone.Model
   
   # Returns the image in a single dimensional array format
   # where the pixels go in r, g, b, a order.
-  getMatrix:() =>
-    result = []; x = [];
+  getArray:() =>
     matrix = @ctx.getImageData(0,0,@width,@height)
     return matrix
   
@@ -124,43 +130,70 @@ module.exports = class Image extends Backbone.Model
   # Simple subtract algorithm to find the difference
   # between two images.
   subtract:(image) =>
-    matrixOne = @getMatrix(); matrixTwo = image.getMatrix(); i = 0;
+    matrixOne = @getArray(); matrixTwo = image.getArray(); i = 0;
     while i < matrixOne.data.length
       matrixTwo.data[i] -= matrixOne.data[i];
       matrixTwo.data[i+1] -= matrixOne.data[i+1];
       matrixTwo.data[i+2] -= matrixOne.data[i+2];
       i += 4
-    image = new Image(matrixTwo)
-    return image    
+    return new Image(matrixTwo) 
   
   # Simple multiply algorithm to increase saturation
   # in the image. First subtracts a grey level and
   # then multiplies by a factor.
   saturate:(factor=250/200) =>
-    matrix = @getMatrix(); i = 0;
+    matrix = @getArray(); i = 0;
     while i < matrix.data.length
       matrix.data[i] -= 50; matrix.data[i] *= factor
       matrix.data[i+1] -= 50; matrix.data[i+1] *= factor
       matrix.data[i+2] -= 50; matrix.data[i+2] *= factor
       i += 4
-    image = new Image(matrix)
-    return image
+    return new Image(matrix)
   
   # Simple grayscale algorithm. Had to create our
   # own because the cv.js library actually down-
   # samples the image by 4x.
   grayscale:() =>
-    matrix = @getMatrix(); i = 0;
+    matrix = @getArray(); i = 0;
     while i < matrix.data.length
       avg = (matrix.data[i] + matrix.data[i+1] + matrix.data[i+2]) / 3
       matrix.data[i] = matrix.data[i+1] = matrix.data[i+2] = avg
       i += 4
-    image = new Image(matrix)
-    return image
+    return new Image(matrix)
 
   # Alias to the cv.js library's binarize function.
   # We pass in our image and give it a threshold.
-  binarize:(threshold=128, otsu=false) =>
-    matrix = @getMatrix()
-    if otsu is true then threshold = CV.otsu(matrix); console.log(otsu)
+  binarize:(threshold=-1) =>
+    matrix = @getArray()
+    if threshold is -1 then threshold = CV.otsu(matrix);
     return new Image(CV.threshold(matrix, matrix, threshold))
+  
+  # Simple function to invert the pixels in an image.
+  invert:() =>
+    matrix = @getArray(); i = 0;
+    while i < matrix.data.length
+      matrix.data[i] = 255 - matrix.data[i]
+      matrix.data[i+1] = 255 - matrix.data[i+1]
+      matrix.data[i+2] = 255 - matrix.data[i+2]
+      i += 4
+    return new Image(matrix)   
+  
+  # Returns a greyscale image where black represents
+  # exact color match and white represents an opposite
+  # hue.
+  hueDistance:(matchHue) =>
+    matrix = @getArray(); i = 0;
+    while i < matrix.data.length
+      hsv = Color.RGBtoHSV(matrix.data[i], matrix.data[i+1], matrix.data[i+2])
+      if hsv[2]<40
+        matrix.data[i] = matrix.data[i+1] = matrix.data[i+2] = 255
+      else
+        pixelHue = hsv[0]
+        lowerHue = (if pixelHue > matchHue then matchHue else pixelHue)
+        higherHue = (if pixelHue > matchHue then pixelHue else matchHue)
+        d1 = higherHue - lowerHue
+        d2 = lowerHue + 361 - higherHue
+        distance = (if d1 > d2 then d2 else d1)
+        matrix.data[i] = matrix.data[i+1] = matrix.data[i+2] = 255 * (distance / 360)
+      i += 4
+    return new Image(matrix)
