@@ -2,26 +2,92 @@
 // No more vendor prefixes. http://visionmedia.github.com/nib/
 @import 'nib'
 
-// Apply a natural box layout model to all elements.
-// http://paulirish.com/2012/box-sizing-border-box-ftw/
 *
   box-sizing: border-box
 
+body
+  font-family: 'Helvetica', 'Arial', 'Chivo', sans-serif;
+  background: url("../images/lt.png") repeat;
+
 #home-view
-  width: 480px
+  width: 900px
   margin: 0 auto
 
-h1
-  padding-left: 138px
-  margin-bottom: 0.5em
-  font-size: 5em
-  color: #fff
-  border-radius: 5px
-  background-color: #91a2c0
-  background-image: url('http://brunch.io/images/brunch.png')
-  background-repeat: no-repeat
-  background-position: 2px
+#box
+  background: rgba(250,250,250, .7)
+  border: 4px solid #fff
+  box-shadow: 0px 0px 20px rgba(0,0,0,.3), inset 0px 0px 10px rgba(0,0,0,.1)
+  border-radius: 3px
+  margin-bottom: 100px
+  padding: 16px
+  
+#preview
+  width: 100%
+  
+#preview #camera
+  margin: 0 auto
+  width: 320px
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 4px 10px;
 
+.help
+  padding-top: 16px
+  border-top: 1px solid #bbb
+  
+.help.first
+  padding-top: 0px
+  border-top: none
+  border-bottom: 1px solid #bbb
+
+.help p
+  font-size: 16px
+  text-indent: 25px
+  margin-top: 0px
+  margin-bottom: 16px
+  color: rgb(51, 51, 51);
+  text-shadow: 0px 1px 0px rgba(255, 255, 255, .7);
+
+h1
+  font-family: 'Montserrat Alternates'
+  color: #0a283f;
+  font-size: 42px
+  text-align: center
+  text-shadow: 0px 2px 0px rgba(255,255,255,.7)
+  margin: 0;
+  margin-top: 30px;
+
+h2
+  font-family: 'Montserrat Alternates'
+  color: #0a283f;
+  font-size: 20px
+  text-align: center
+  text-shadow: 0px 2px 0px rgba(255,255,255,.6)
+  margin-top: -5px
+  font-weight: normal
+  
+
+.demo
+  width: 96%
+  margin: 0 auto
+  margin-top: 16px
+  margin-bottom: 25px;
+  background: rgba(0,0,0,.1)
+  border-radius: 1px
+  padding: 9px
+  box-sizing: border-box
+  border: 1px solid rgba(0,0,0,.1)
+  
+.demo .preview, .demo .code
+  display: inline-block
+  vertical-align: top
+
+.demo .preview
+  width: 320px
+  height: 240px
+  
+.demo .code form textarea
+  height: 240px
+  width: 475px
+  
 .cvImage
   display: inline-block
   position: relative

@@ -117,6 +117,16 @@ module.exports = class Image extends Backbone.Model
     ctx.drawImage(@canvas, 0, 0, @width*factor, @height*factor)
     return new Image(scaled)
   
+  # Simple image resize. Also uses canvas to get this
+  # done quickly. Returns a new image.
+  resize:(width, height) =>
+    scaled = document.createElement("canvas")
+    scaled.width = width
+    scaled.height = height
+    ctx = scaled.getContext("2d")
+    ctx.drawImage(@canvas, 0, 0, width, height)
+    return new Image(scaled)   
+    
   # Simple image crop. Uses canvas to get this done
   # quickly. Returns a new image.
   crop:(x, y, width, height) =>
