@@ -1,27 +1,41 @@
 <link href='http://fonts.googleapis.com/css?family=Montserrat+Alternates' rel='stylesheet' type='text/css'>
-<link href='http://fonts.googleapis.com/css?family=Chivo' rel='stylesheet' type='text/css'>
 <a href="https://github.com/ingenuitas/simplecv-js"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+
 <h1>SimpleCV.js</h1>
 <h2>Computer Vision on the Web</h2>
+
 <div id="box">
+  <div id="navigation">
+    <div id="gotoOverview" class="button pressed">Overview</div>
+    <div id="gotoConsole" class="button">Console</div>
+  </div>
+  
+  <div id="console">
+    <div class="help first">
+      <p>
+        This is the SimpleCV.js interactive CoffeeScript console. As you write code in the window on the left
+        , the window on the right will update to reflect the changes. Some of the code initialzied in the text
+        box is necessary for the console to run. If the console stops working then refresh the page.
+      </p>
+    </div>
+  </div>
+  
   <div id="guide">
     <div class="help first">
-    <p>
-      SimpleCV.js is a computer-vision library that brings functionality from the SimpleCV python library
-      to the browser. In addition to the Image and some basic transformation abilities, there is a Camera
-      object which takes advantage of the WebRTC camera protocol from HTML5 (which is only implemented in
-      Google Chrome as of now).
-    </p>
-    <p>
-      Click "Allow" in the popup at any time to swap the kitten images out with a real-time demo of SimpleCV.js
-      capabilities.
-    </p>
+      <p>
+        SimpleCV.js is a computer-vision library that brings functionality from the SimpleCV python library
+        to the browser. In addition to the Image and some basic transformation abilities, there is a Camera
+        object which takes advantage of the WebRTC camera protocol from HTML5 (which is only implemented in
+        Google Chrome as of now). Click "Allow" in the popup at any time to swap the kitten images out with
+        a real-time demo of SimpleCV.js capabilities.
+      </p>
     </div>
     
     <div id="demoOne" class="demo">
       <div class="preview"></div>
       <div class="code">
-        <form><textarea id="code" name="code">
+        <form>
+          <textarea id="code" name="code">
 CVImage = require '../models/Image'
 
 container = $("body")
@@ -29,39 +43,46 @@ source = $("<img/>").attr("src", "kitty.jpg").get(0)
 source.onload = =>
   kitty = new CVImage(source)
   kitty.show(container)  
-        </textarea></form>
+          </textarea>
+        </form>
       </div>
     </div>
+    
     <div class="help">
-    <p>
-      Transformations and alterations can be easy stacked on top of existing Images. Take for example a grayscale
-      adjustment on the image above. We can apply the transformation on the existing image and save it
-      off as a new Image and display that.
-    </p>
+      <p>
+        Transformations and alterations can be easy stacked on top of existing Images. Take for example a grayscale
+        adjustment on the image above. We can apply the transformation on the existing image and save it
+        off as a new Image and display that.
+      </p>
     </div>    
     <div id="demoTwo" class="demo">
       <div class="preview"></div>
       <div class="code">
-        <form><textarea id="code" name="code">
+        <form>
+          <textarea id="code" name="code">
 greyKitty = kitty.grayscale()
 greyKitty.show(container)
-        </textarea></form>
+          </textarea>
+        </form>
       </div>
     </div>
+    
     <div class="help">
-    <p>
-      Using the power embedded in already existing code is important, too. SimpleCV.js comes bundled with a few neat
-      javascript libraries that provide additional functionality and analyzation tools. This binarize function is built
-      into CV.js and has an alias built into the Image class.
-    </p>
+      <p>
+        Using the power embedded in already existing code is important, too. SimpleCV.js comes bundled with a few neat
+        javascript libraries that provide additional functionality and analyzation tools. This binarize function is built
+        into CV.js and has an alias built into the Image class.
+      </p>
     </div>       
     <div id="demoThree" class="demo">
       <div class="preview"></div>
       <div class="code">
-        <form><textarea id="code" name="code">
+        <form>
+          <textarea id="code" name="code">
 binaryCat = greyKitty.binarize()
 binaryCat.show(container)
-        </textarea></form>
+          </textarea>
+        </form>
       </div>
     </div>    
   </div>

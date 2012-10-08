@@ -6,7 +6,7 @@
   box-sizing: border-box
 
 body
-  font-family: 'Helvetica', 'Arial', 'Chivo', sans-serif;
+  font-family: 'Helvetica', 'Arial', sans-serif;
   background: url("../images/lt.png") repeat;
 
 #home-view
@@ -18,8 +18,61 @@ body
   border: 4px solid #fff
   box-shadow: 0px 0px 20px rgba(0,0,0,.3), inset 0px 0px 10px rgba(0,0,0,.1)
   border-radius: 4px
-  margin-bottom: 100px
-  padding: 16px
+  margin-bottom: 50px
+  padding: 33px
+
+#navigation
+  width: 200px
+  height: 28px
+  margin: 0 auto
+  box-shadow: 0px 1px 0px rgba(255,255,255,0.6)
+  border-radius: 3px
+  margin-bottom: 20px
+  margin-top: -10px
+  
+#navigation .button
+  width: 100px
+  height: 28px
+  float: left
+  text-align: center
+  margin: 0
+  padding: 4px 5px
+  background: linear-gradient(top, #fff, #ddd)
+  border-radius: 3px
+  box-sizing: border-box
+  border: 1px solid rgba(0,0,0,.2)
+  cursor: pointer
+  font-size: 13px
+  color: #0a283f
+  font-weight: bold
+  text-shadow: 0px 1px 0px white
+  
+#navigation .button:first-child
+  border-top-right-radius: 0px
+  border-bottom-right-radius: 0px
+  
+#navigation .button:first-child.pressed
+  border-right: none
+  
+#navigation .button:last-child
+  border-top-left-radius: 0px
+  border-bottom-left-radius: 0px
+  
+#navigation .button:last-child.pressed
+  border-left: none
+  
+#navigation .button.pressed
+  background: none
+  font-weight: normal
+  color: #666
+  text-shadow: none
+  box-shadow: inset 0px 1px 2px rgba(0,0,0,.1)
+  
+#navigation .button:hover:not(.pressed)
+  background: linear-gradient(top, #fff, #eee)
+
+#console
+  display: none
   
 #preview
   width: 100%
@@ -39,12 +92,11 @@ body
   border-bottom: 1px solid #bbb
 
 .help p
-  font-size: 16px
-  text-indent: 25px
+  font-size: 15px
   margin-top: 0px
   margin-bottom: 16px
   color: rgb(51, 51, 51);
-  text-shadow: 0px 1px 0px rgba(255, 255, 255, .7);
+  text-shadow: 0px 1px 0px rgba(255, 255, 255, .8);
 
 h1
   font-family: 'Montserrat Alternates'
@@ -64,17 +116,19 @@ h2
   margin-top: -5px
   font-weight: normal
   
-
 .demo
-  width: 96%
-  margin: 0 auto
+  width: 100%
   margin-top: 16px
   margin-bottom: 25px;
   background: rgba(0,0,0,.1)
-  border-radius: 1px
-  padding: 9px
+  border-radius: 3px
+  padding: 7px
   box-sizing: border-box
-  border: 1px solid rgba(0,0,0,.1)
+  border: 1px solid rgba(0,0,0,.2)
+  box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.10)
+  
+.demo .preview canvas
+  border-radius: 2px;
   
 .demo .preview, .demo .code
   display: inline-block
@@ -87,6 +141,9 @@ h2
 .demo .code form textarea
   height: 240px
   width: 475px
+  
+.demo:last-child
+  margin-bottom: 3px
   
 .cvImage
   display: inline-block

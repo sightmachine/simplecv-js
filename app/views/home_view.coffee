@@ -12,6 +12,10 @@ module.exports = class HomeView extends View
   demoThree: null
   editors: null
   
+  events:
+    "click #gotoOverview": "gotoOverview"
+    "click #gotoConsole": "gotoConsole"
+  
   initialize: =>
     @editors = []
     $(=>
@@ -21,9 +25,20 @@ module.exports = class HomeView extends View
         @highlight()
         @kittyDemo()
         @cameraDemo()
-        #@realTimeCamera()
     )
     return
+  
+  gotoOverview: =>
+    $("#gotoConsole").removeClass("pressed")
+    $("#console").hide()
+    $("#gotoOverview").addClass("pressed")
+    $("#guide").show()
+  
+  gotoConsole: =>
+    $("#gotoOverview").removeClass("pressed")
+    $("#guide").hide()
+    $("#gotoConsole").addClass("pressed")
+    $("#console").show()  
   
   highlight: =>
     elements = $(".demo .code form textarea")
