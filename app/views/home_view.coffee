@@ -30,7 +30,7 @@ module.exports = class HomeView extends View
     for i in elements
       editor = CodeMirror.fromTextArea(i, {
         lineNumbers: true,
-        #readOnly: true,
+        readOnly: true,
         lineWrapping: true
       });
       editor.setOption("theme", "ambiance")
@@ -73,7 +73,6 @@ c.init =>
     me = me.saturate()
     me.show(container)
   , 1000/60)
-    # Runs at 60 fps
 """)
       
       @editors[1].setValue("""
