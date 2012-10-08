@@ -1,10 +1,12 @@
+Model = require "./model"
 CVImage = require './Image'
+
 
 # The Camera model contains code to initialize
 # a connection to the camera via WebRTC and
 # provides one public method to capture a single
 # frame from the camera in Imgae format.
-module.exports = class Camera extends Backbone.Model
+module.exports = class Camera extends Model
   load: null
   stream: null
   video: null
