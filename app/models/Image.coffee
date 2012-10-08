@@ -1,11 +1,12 @@
 Color = require './Color'
+Model = require './model'
 
 # The Image model allows you to pass in a Canvas,
 # HTMLImageElement, or an ImageData object and store
 # that information in a universal format. The data
 # is always passed in to a Canvas and the data can
 # be retrieved by the methods show and getArray.
-module.exports = class Image extends Backbone.Model
+module.exports = class Image extends Model
   parent = null
   canvas = null
   ctx = null
