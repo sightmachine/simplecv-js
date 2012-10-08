@@ -11,13 +11,18 @@ module.exports = class HomeView extends View
   demoTwo: null
   demoThree: null
   editors: null
+  liveEditor: null
+  delay: null
   
   events:
     "click #gotoOverview": "gotoOverview"
     "click #gotoConsole": "gotoConsole"
   
   initialize: =>
+    @liveEditor = []
     @editors = []
+    @delay = []
+      
     $(=>
         @demoOne = $("#demoOne .preview")
         @demoTwo = $("#demoTwo .preview")
@@ -38,9 +43,49 @@ module.exports = class HomeView extends View
     $("#gotoOverview").removeClass("pressed")
     $("#guide").hide()
     $("#gotoConsole").addClass("pressed")
-    $("#console").show()  
+    $("#console").show()
+    @liveEditor.refresh()
+    setTimeout(@updatePreview, 300);
+  
+  updatePreview: =>
+    previewFrame = document.getElementById('preview');
+    preview =  previewFrame.contentDocument ||  previewFrame.contentWindow.document;
+    preview.open();
+    preview.write("""
+<!doctype html>
+<head>
+<link rel="stylesheet" href="stylesheets/app.css">
+<script src="javascripts/vendor.js"></script>
+<script src="javascripts/app.js"></script>
+<script>require('initialize');</script>
+</head>
+<body>
+
+<div id="display"></div>
+
+<script>
+  display = $("#display")
+                  
+""" + @liveEditor.getValue() + """
+</script>
+</body>
+</html>
+
+""")
+    preview.close();  
   
   highlight: =>
+    @liveEditor = CodeMirror.fromTextArea($("#liveDemo .code form textarea").get(0), {
+      lineNumbers: true,
+      readOnly: false,
+      lineWrapping: false,
+      fixedGutter: true,
+      onChange: =>
+        clearTimeout(@delay);
+        @delay = setTimeout(@updatePreview, 300);
+    });
+    @liveEditor.setOption("theme", "ambiance")
+    
     elements = $(".demo .code form textarea")
     for i in elements
       editor = CodeMirror.fromTextArea(i, {

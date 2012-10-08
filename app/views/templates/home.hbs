@@ -15,8 +15,20 @@
       <p>
         This is the SimpleCV.js interactive CoffeeScript console. As you write code in the window on the left
         , the window on the right will update to reflect the changes. Some of the code initialzied in the text
-        box is necessary for the console to run. If the console stops working then refresh the page.
+        box is necessary for the console to run. If the console stops working please refresh the page.
       </p>
+    </div>
+    
+    <div id="liveDemo">
+      <div class="code">
+        <form>
+          <textarea id="code" name="code">
+Camera = require('models/Camera')
+CVImage = require('models/Image')
+          </textarea>
+        </form>
+      </div>
+      <iframe id=preview scrolling="no"></iframe>     
     </div>
   </div>
   
