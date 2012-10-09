@@ -22,13 +22,14 @@ exports.config =
       # even if they are not present here.
       order:
         before: [
-          'vendor/scripts/console-helper.js',
-          'vendor/scripts/jquery-1.7.2.js',
-          'vendor/scripts/underscore-1.3.1.js',
+          'vendor/scripts/console-helper.js'
+          'vendor/scripts/jquery-1.7.2.js'
+          'vendor/scripts/underscore-1.3.1.js'
           'vendor/scripts/backbone-0.9.2.js'
           'vendor/scripts/cv.js'
           'vendor/scripts/ccv.js'
           'vendor/scripts/face.js'
+          'vendor/scripts/processing-1.4.1.min.js'
         ]
 
     stylesheets:

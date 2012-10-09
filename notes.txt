@@ -1,0 +1,34 @@
+
+Camera().getImage().show()  <--- this takes 2d context from a camera, casts as image model, adds canvas to dom
+
+Image
+ - canvas2d
+ - 2d array
+
+ Image(canvas) <- make an image from a canvas 2d context
+ Image(array) <- make an image from an array
+
+ getBitmap() <- if canvas2d, returns this, if 2d array, creates a canvas (off-dom) and populates it
+ getMatrix() <- if has array raturns, otherwise populates from canvas
+
+ getDrawingLayer() (aka dl()) <- returns a new canvas (100% alpha) of same dimensions, as processing object
+ addDrawingLayer()
+ removeDrawingLayer()
+ 
+ Image.show([parent dom object]) <- if canvas is not visible/in dom add to dom, if not given parent object, append to body
+   - if the image has drawing layers, stack those over top
+ 
+ binarize() <- implement as SimpleCV, but use cv.js 
+
+ Image.show() <-- write image to dom
+ Image.binarize().show() <-- write binarized image to dom (image remains unchanged)
+ 
+
+
+
+
+
+
+
+
+

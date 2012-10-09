@@ -1,4 +1,4 @@
-application = require 'application'
+application = require './application'
 
 $ ->
   application.initialize()
