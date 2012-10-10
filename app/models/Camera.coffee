@@ -35,7 +35,7 @@ module.exports = class Camera extends Model
   # Call the callback hook. 
   onUserMediaSuccess:(stream) =>
     @video.src = window.webkitURL.createObjectURL(stream)
-    setTimeout(@load, 700)
+    setTimeout(@load, 750)
     
   # :(
   onUserMediaError:(error) =>

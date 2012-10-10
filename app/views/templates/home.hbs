@@ -1,4 +1,5 @@
 <link href='http://fonts.googleapis.com/css?family=Montserrat+Alternates' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Ubuntu+Mono' rel='stylesheet' type='text/css'>
 <a href="https://github.com/ingenuitas/simplecv-js"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
 
 <h1>SimpleCV.js</h1>
@@ -23,12 +24,26 @@
       <div class="code">
         <form>
           <textarea id="code" name="code">
-Camera = require('models/Camera')
-CVImage = require('models/Image')
+# The following lines have already been called
+# for you:
+#   Camera = new require('models/Camera')
+#   CVImage = require('models/Image')
+#
+# Show images to the variable "display".
+
+setInterval(=>
+  i = Camera.getImage()
+  i = i.scale .5
+  i = i.grayscale()
+  i.show display
+, 1000/60)
           </textarea>
         </form>
       </div>
-      <iframe id=preview scrolling="no"></iframe>     
+      <div class="sidebar">
+        <div id="displayOne"><div class="cvImage"></div></div>
+        <button class="run inactive">Execute</button>
+      </div>
     </div>
   </div>
   

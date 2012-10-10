@@ -13,15 +13,30 @@ module.exports = class HomeView extends View
   editors: null
   liveEditor: null
   delay: null
+  camera: null
+  active: null
+  intervals: null
   
   events:
     "click #gotoOverview": "gotoOverview"
     "click #gotoConsole": "gotoConsole"
+    "click .run": "updatePreview"
   
   initialize: =>
+    @intervals = []
+    window.oldSetInterval = window.setInterval;
+    window.clearAllIntervals = =>
+      for i in @intervals
+        window.clearInterval i
+      @intervals = []      
+    window.setInterval = (func, interval) =>
+        @intervals.push oldSetInterval(func, interval);
+    
     @liveEditor = []
     @editors = []
     @delay = []
+    @camera = []
+    @active = false
       
     $(=>
         @demoOne = $("#demoOne .preview")
@@ -48,41 +63,29 @@ module.exports = class HomeView extends View
     setTimeout(@updatePreview, 300);
   
   updatePreview: =>
-    previewFrame = document.getElementById('preview');
-    preview =  previewFrame.contentDocument ||  previewFrame.contentWindow.document;
-    preview.open();
-    preview.write("""
-<!doctype html>
-<head>
-<link rel="stylesheet" href="stylesheets/app.css">
-<script src="javascripts/vendor.js"></script>
-<script src="javascripts/app.js"></script>
-<script>require('initialize');</script>
-</head>
-<body>
-
-<div id="display"></div>
-
-<script>
-  display = $("#display")
-                  
-""" + @liveEditor.getValue() + """
-</script>
-</body>
-</html>
-
-""")
-    preview.close();  
+    if @active is false then return
+    code = @liveEditor.getValue()
+    try
+      code = CoffeeScript.compile code, bare:on
+      $("#liveDemo #displayOne span").remove()
+      try
+        Camera = @camera
+        display = $("#displayOne .cvImage")
+        window.clearAllIntervals()
+        eval code
+      catch e
+        console.log e.toString(), e.stack
+        $("#liveDemo #displayOne span").html(e.toString())        
+    catch e
+      console.log e.toString(), e.stack
+      $("#liveDemo #displayOne span").html(e.toString())
   
   highlight: =>
     @liveEditor = CodeMirror.fromTextArea($("#liveDemo .code form textarea").get(0), {
       lineNumbers: true,
       readOnly: false,
       lineWrapping: false,
-      fixedGutter: true,
-      onChange: =>
-        clearTimeout(@delay);
-        @delay = setTimeout(@updatePreview, 300);
+      fixedGutter: true
     });
     @liveEditor.setOption("theme", "ambiance")
     
@@ -115,11 +118,14 @@ module.exports = class HomeView extends View
 
   # Displays a camera, 
   cameraDemo: =>
-    c = new Camera();
-    c.init(=>
+    @camera = new Camera();
+    @camera.init(=>
+      @active = true
       one = $('<div class="cvImage"></div>'); @demoOne.html(one)
       two = $('<div class="cvImage"></div>'); @demoTwo.html(two)
       three = $('<div class="cvImage"></div>'); @demoThree.html(three)
+      
+      $("button.run").removeClass("inactive")
       
       @editors[0].setValue("""
 Camera = require '../models/Camera'
@@ -151,9 +157,9 @@ me = me.binarize(241)
 me.show(three)
 """)      
       
-      setInterval(=>
+      oldSetInterval(=>
         # Scaled Camera Shot
-        a = c.getImage()
+        a = @camera.getImage()
         a = a.scale(.5)
         a = a.saturate()
         a.show(one)
