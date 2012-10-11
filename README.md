@@ -16,5 +16,7 @@ Wraps the following:
 * seam carving.js: https://github.com/axemclion/seamcarving
 * three.js: https://github.com/mrdoob/three.js/
 * d3.js: https://github.com/mbostock/d3
-* 
+* hogdescriptor.js: https://github.com/harthur/hog-descriptor
+* brain.js: https://github.com/harthur/brain
+
 
