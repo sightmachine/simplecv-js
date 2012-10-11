@@ -8,8 +8,10 @@ CVImage = require './Image'
 # frame from the camera in Imgae format.
 module.exports = class Camera extends Model
   load: null
-  stream: null
+  animation: null
+  request: null
   video: null
+  cancel: null
   
   # TODO: Figure out how to get this to scale
   # with the actual video stream.
@@ -20,6 +22,7 @@ module.exports = class Camera extends Model
   # to the camera stream for image capture.
   # It seems we have to defi
   initialize:() =>
+    @request = 0
     @video = $("<video autoplay></video>").get(0)
     @video.width = @width
     @video.height = @height
@@ -51,3 +54,21 @@ module.exports = class Camera extends Model
     ctx = canvas.getContext("2d")
     ctx.drawImage(@video, @width, 0, -@width, @height)
     return new CVImage(canvas)
+  
+  # Uses the HTML5 requestAnimationFrame and
+  # a callback to easily stream the camera
+  # from code.
+  beginStream:(callback) =>
+    @animation = =>
+      callback(@getImage())
+      @request = window.requestAnimationFrame(@animation);
+    @request = window.requestAnimationFrame(@animation);
+    
+  # Loop for running   
+    
+  # Cancels the current stream loop if any.
+  endStream:() =>
+    if (@request)
+      window.cancelAnimationFrame(@request);
+    @request = 0;
+    

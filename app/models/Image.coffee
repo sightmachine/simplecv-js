@@ -1,5 +1,6 @@
 Color = require './Color'
 Model = require './model'
+Display = require './Display'
 
 # The Image model allows you to pass in a Canvas,
 # HTMLImageElement, or an ImageData object and store
@@ -42,6 +43,9 @@ module.exports = class Image extends Model
   # If has been called before, ensure that
   # the canvas is visible.
   show:(container=$("body")) =>
+    if container instanceof Display
+      container = container.element
+      
     view = $(container)
     view.html("").append(@canvas).width(@width).height(@height)
     for layer in @layers

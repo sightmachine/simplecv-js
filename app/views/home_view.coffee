@@ -2,6 +2,7 @@ View = require './view'
 Camera = require '../models/Camera'
 CVImage = require '../models/Image'
 Color = require '../models/Color'
+Display = require '../models/Display'
 template = require './templates/home'
 
 module.exports = class HomeView extends View
@@ -67,18 +68,19 @@ module.exports = class HomeView extends View
     code = @liveEditor.getValue()
     try
       code = CoffeeScript.compile code, bare:on
-      $("#liveDemo #displayOne span").remove()
+      $("#errors").html("")
       try
         Camera = @camera
+        @camera.endStream()
         display = $("#displayOne .cvImage")
         window.clearAllIntervals()
         eval code
       catch e
         console.log e.toString(), e.stack
-        $("#liveDemo #displayOne span").html(e.toString())        
+        $("#errors").html(e.toString())        
     catch e
       console.log e.toString(), e.stack
-      $("#liveDemo #displayOne span").html(e.toString())
+      $("#errors").html(e.toString())
   
   highlight: =>
     @liveEditor = CodeMirror.fromTextArea($("#liveDemo .code form textarea").get(0), {
