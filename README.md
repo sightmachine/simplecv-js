@@ -18,5 +18,6 @@ Wraps the following:
 * d3.js: https://github.com/mbostock/d3
 * hogdescriptor.js: https://github.com/harthur/hog-descriptor
 * brain.js: https://github.com/harthur/brain
+* jsqrcode: https://github.com/LazarSoft/jsqrcode
 
 
