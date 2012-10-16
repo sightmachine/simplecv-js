@@ -8,22 +8,23 @@
 			// socket.io specific code
 			var socket = io.connect();
 			socket.on('update', function(data) {
-								$('#output').append(data);
-								var canvas = document.getElementById('output');
-								if (canvas && canvas.getContext) {
-									var context = canvas.getContext('2d');
-									if (context) {
-										context.clearRect(0, 0, canvas.width, canvas.height);
-										var img = new Image();
-										//img.src = base64_decode(image) ;
-										img.onload = function () {
-											context.drawImage(img, 0, 0, canvas.width, canvas.height);
-										}
-										img.src=data;
-									}
-								 }
+								console.log('got data');
+								console.log(data);
+								//canvas = document.createElement('canvas');
+								canvas = document.getElementById('output');
+								canvas.width = 640;
+								canvas.height = 480;
+								context = canvas.getContext('2d');
+								document.getElementById('text-out').appendChild(canvas);
+								img = new Image();
+								img.src = data;
+								img.onload = function() {
+									context.drawImage(img, 0, 0);
+								}
+								
 								});
    </script>
+
 		<meta charset="utf-8" />
 
 		<title>Really simple getUserMedia example</title>
@@ -36,6 +37,14 @@
 		</p>
 
 		<script src="webcam.js"></script>
+		<script>
+		button = document.getElementsByTagName('button')[0]
+		$(button).click( function()
+           {
+							socket.emit('image', document.getElementsByTagName('canvas')[0].toDataURL());
+           }
+      );
+   </script>
 	<div id="text-out"></div>
 	<canvas id="output"></canvas>
 	</body>
