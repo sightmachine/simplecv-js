@@ -2,6 +2,33 @@
 
 Currently a Skeleton
 
+[***CHECK OUT THE LIVE DEMO (Chrome only!)***](http://demo.simplecv.org/)
+
+***Quick Start Guide***
+
+_Note that this quickstart guide is tested and works for Ubuntu 12.4 LTS_
+
+* Install [brunch](https://github.com/brunch/coffee-script-brunch).
+* Install a [coffee script](http://coffeescript.org/) build environment.
+* _Optional_ Install [SimpleCV](https://github.com/ingenuitas/simplecv#installation) and its dependencies. 
+* Add the following command to your .bashrc file and source the file:
+  alias http "python -m SimpleHTTPServer"
+* Run the following commands in the shell
+    * > cd simplecv-js 
+    * > brunch build
+    * > brunch watch &  
+    * > http
+* Using Chrome go to locahost:8000/public/ and check out the results.
+* Enjoy!
+
+To test the javascript to python functionality do the following:
+
+* cd ./simplecv-js/webrtc-2-python 
+* python server.py
+* Using Chrome go to localhost:8080
+* Allow the camera.
+* Enjoy!
+
 Wraps the following:
 
 * ccv.js & face.js: https://github.com/liuliu/ccv
