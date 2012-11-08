@@ -19,6 +19,7 @@ _Note that this quickstart guide is tested and works for Ubuntu 12.4 LTS_
     * > brunch watch &  
     * > http
 * Using Chrome go to locahost:8000/public/ and check out the results.
+* Most of the action happens in /simplecv-js/app/models/Image.coffee
 * Enjoy!
 
 To test the javascript to python functionality do the following:
