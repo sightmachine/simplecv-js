@@ -40,7 +40,7 @@ console.log size
 # visible.
 Camera.beginStream((i)=>
   i = i.resize size[0], size[1]
-  i = i.grayscale()
+  i = i.blur(7,false)
   i.show display
 )
           </textarea>
