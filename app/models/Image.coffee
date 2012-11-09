@@ -1,3 +1,4 @@
+
 Color = require './Color'
 Model = require './model'
 Display = require './Display'
@@ -16,7 +17,7 @@ module.exports = class Image extends Model
   layers = null
   
   # Takes in a Canvas object, Array or Image.
-  # In either case, the data is stored in canvas
+  # In eitherx case, the data is stored in canvas
   # and array form. 
   initialize:(data) =>
     @canvas = document.createElement("canvas"); @layers = []
@@ -93,7 +94,7 @@ module.exports = class Image extends Model
    
   # Returns the image in a two dimensional array format
   # where each pixel is structured as [r, g, b].
-  getMatrix: =>
+  getMatrix:() =>
     result = []; x = [];
     matrix = @ctx.getImageData(0,0,@width,@height)
     i = 0; a = 1;
@@ -105,7 +106,8 @@ module.exports = class Image extends Model
       else
         a++
     return result
-  
+
+
   # Returns the image in a single dimensional array format
   # where the pixels go in r, g, b, a order.
   getArray:() =>
@@ -176,6 +178,30 @@ module.exports = class Image extends Model
       i += 4
     return new Image(matrix)
 
+  # Return a gray matrix suitable for grayscale cv operations.
+  # getGrayArray:() =>
+  #   matrix = @getArray();
+  #   i = 0;
+  #   while i < matrix.data.length
+  #     avg = (matrix.data[i] + matrix.data[i+1] + matrix.data[i+2]) / 3
+  #     matrix.data[i] = matrix.data[i+1] = matrix.data[i+2] = avg
+  #     i += 4
+  #   return matrix
+       
+  getGrayMatrix:() =>
+    result = []; x = [];
+    matrix = @ctx.getImageData(0,0,@width,@height)
+    i = 0; a = 1;
+    while i < matrix.data.length
+      avg = (matrix.data[i] + matrix.data[i+1] + matrix.data[i+2]) / 3
+      x.push [avg]    
+      i += 4
+      if a is @width
+        result.push x; x = []; a = 1
+      else
+        a++
+    return result
+
   # Alias to the cv.js library's binarize function.
   # We pass in our image and give it a threshold.
   binarize:(threshold=-1) =>
@@ -192,7 +218,7 @@ module.exports = class Image extends Model
       matrix.data[i+2] = 255 - matrix.data[i+2]
       i += 4
     return new Image(matrix)   
-  
+ 
   # Returns a greyscale image where black represents
   # exact color match and white represents an opposite
   # hue.
@@ -212,3 +238,125 @@ module.exports = class Image extends Model
         matrix.data[i] = matrix.data[i+1] = matrix.data[i+2] = 255 * (distance / 360)
       i += 4
     return new Image(matrix)
+
+  cvGray2RGB:(input) =>
+    # CV.js does some crazy stuff to make a grayscale image
+    # Instead of making an array that is the same size as the
+    # image but only has one channel, it takes a three channel
+    # image and shoves the grayscale values into the first third
+    # of the array. So for example, if you have a 10x10pixel image
+    # the grayscale image is 300bytes long, but only the first
+    # 100 bytes are used for the gray image. This method 
+    # unpacks the first hundred bytes and adds sets each 
+    # channel of the image to the gray value. If you neglect
+    # to do this you get a gray image where there are four smaller
+    # images along the top 1/3 of the image.
+    #
+    out = @getArray()
+    a = 0
+    b = 0
+    while a < out.data.length
+      out.data[a] = input.data[b]
+      out.data[a+1] = input.data[b]
+      out.data[a+2] = input.data[b]
+      a = a + 4
+      b = b + 1
+    return new Image(out)
+    
+  getRChannel:() =>
+    # Get the red channel as a grayscale rgb image.
+    retVal = @getArray()
+    a = 0
+    b = 0
+    while a < retVal.data.length
+      val = retVal.data[a]
+      retVal.data[a+1] = val
+      retVal.data[a+2] = val
+      a = a + 4
+    return new Image(retVal)
+
+  getGChannel:() =>
+    # Get the green channel as a grayscale rgb image.
+    retVal = @getArray()
+    a = 0
+    b = 0
+    while a < retVal.data.length
+      val = retVal.data[a+1]
+      retVal.data[a] = val
+      retVal.data[a+2] = val
+      a = a + 4
+    return new Image(retVal)
+
+  getBChannel:() =>
+    # Get the blue channel as a grayscale rgb image.
+    retVal = @getArray()
+    a = 0
+    while a < retVal.data.length
+      val = retVal.data[a+2]
+      retVal.data[a] = val
+      retVal.data[a+1] = val
+      a = a + 4
+    return new Image(retVal)
+
+  split:() =>
+    # Split the image into each of its three channels return a list
+    return [@getRChannel(),@getGChannel(),@getBChannel()]
+
+  merge:(r,g,b) =>
+    # Merge rgb images of the channels into one image
+    if( r.width is not @width and r.height is not @height and \
+        g.width is not @width and g.height is not @height and \
+        b.width is not @width and b.height is not @height )
+      throw 'Sorry - I can\'t merge images of different sizes' 
+
+    retVal = @getArray()
+    rp = r.getArray()
+    gp = g.getArray()
+    bp = b.getArray()
+    i = 0
+    while i < retVal.data.length
+      retVal.data[i] = rp.data[i]
+      retVal.data[i+1] = gp.data[i+1]
+      retVal.data[i+2] = bp.data[i+2]
+      i = i + 4
+    return new Image(retVal)
+
+  mergeCVGray:(r,g,b) =>
+    #merge r,g,b cvGray Images into an rgb image. 
+    out = @getArray()
+    i = 0
+    j = 0
+    while i < out.data.length
+      out.data[i] = r.data[j]
+      out.data[i+1] = g.data[j]
+      out.data[i+2] = b.data[j]
+      i = i + 4
+      j = j + 1
+    return new Image(out)
+
+        
+  blur:(kernel_sz, gray=true) =>
+    # Do a gaussian blur, 
+    # the kernel must be odd
+    if( kernel_sz <= 0)
+      kernel_sz = 1
+    if( kernel_sz%2== 0)
+      kernel_sz += 1 # only odd values
+    if( gray )
+      gray1 = @getArray()
+      gray1 = CV.grayscale(gray1,gray1);
+      out = CV.gaussianBlur(gray1,gray1,gray1,kernel_sz)
+      return @cvGray2RGB(out)
+    else
+      chans = @split()
+      r = chans[0].getArray()
+      r = CV.grayscale(r,r)
+      r = CV.gaussianBlur(r,r,r,kernel_sz)
+      g = chans[1].getArray()
+      g = CV.grayscale(g,g)
+      g = CV.gaussianBlur(g,g,g,kernel_sz)
+      b = chans[2].getArray()
+      b = CV.grayscale(b,b)
+      b = CV.gaussianBlur(b,b,b,kernel_sz)
+      return @mergeCVGray(r,g,b)
+  
