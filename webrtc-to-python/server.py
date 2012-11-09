@@ -35,13 +35,13 @@ def run_socketio(path):
     socketio_manage(request.environ, {'': SimpleCVNamespace})
 
 if __name__ == '__main__':
-    print 'Listening on http://localhost:8080'
+    print 'Listening on http://localhost:8081'
     app.debug = True
     from werkzeug.wsgi import SharedDataMiddleware
     app = SharedDataMiddleware(app, {
         '/': os.path.join(os.path.dirname(__file__), 'static')
         })
     from socketio.server import SocketIOServer
-    SocketIOServer(('0.0.0.0', 8080), app,
+    SocketIOServer(('0.0.0.0', 8081), app,
         namespace="socket.io", policy_server=False).serve_forever()
     
