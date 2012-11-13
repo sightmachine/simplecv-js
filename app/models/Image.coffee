@@ -107,6 +107,10 @@ module.exports = class Image extends Model
         a++
     return result
 
+  addBorder:(sz) =>
+    newW = @width+(2*sz)
+    newH = @height+(2*sz)
+    newSz = newW*newH 
 
   # Returns the image in a single dimensional array format
   # where the pixels go in r, g, b, a order.
@@ -334,7 +338,114 @@ module.exports = class Image extends Model
       j = j + 1
     return new Image(out)
 
-        
+
+  rgbxy2idx:(x,y,w,h) =>
+    bpp = 4
+    return (bpp*y*w)+(bpp*x)
+     
+  fakeConvolution:() =>
+    border = 1
+    w = @width+(2*border)
+    h = @height+(2*border) 
+    out = @cloneWithBorder(border)
+    sz = out.length
+    temp = @cloneWithBorder(border)
+    
+    kernel = [[-1.0,-2.0,-1.0],[0.0,0.0,0.0],[1.0,2.0,1.0]]
+    #kernel = [[1,1,1],[1,1,1],[1,1,1]]
+    istart = border
+    istop = border+@width-1
+    jstart = border
+    jstop = border+@height-1
+    
+    for j in [jstart..jstop] #Y
+      for i in [istart..istop] #X
+        #do r/g/b
+        derp = @rgbxy2idx(i,j,w,h)
+        out[@rgbxy2idx(i,j,w,h)]=@ptConvolve(i,j,temp,w,h,kernel)
+        out[1+@rgbxy2idx(i,j,w,h)]=@ptConvolve(i,j,temp,w,h,kernel,offset=1)
+        out[2+@rgbxy2idx(i,j,w,h)]=@ptConvolve(i,j,temp,w,h,kernel,offset=2)
+    return @cropBorderCopy(out,border)
+
+  clamp:(x,max=255,min=0) =>
+    if x > max 
+      return max
+    if x < min
+      return min
+    return x
+       
+  ptConvolve:(x,y,img,w,h,kernel,offset=0,ksz=3)=>
+    a = img[offset+@rgbxy2idx(x+1, y-1,w,h)]*kernel[0][0]
+    b = img[offset+@rgbxy2idx(x,   y-1,w,h)]*kernel[1][0]
+    c = img[offset+@rgbxy2idx(x-1, y-1,w,h)]*kernel[2][0]
+    d = img[offset+@rgbxy2idx(x+1, y,  w,h)]*kernel[0][1]
+    e = img[offset+@rgbxy2idx(x,   y,  w,h)]*kernel[1][1]
+    f = img[offset+@rgbxy2idx(x-1, y,  w,h)]*kernel[2][1]
+    g = img[offset+@rgbxy2idx(x+1, y+1,w,h)]*kernel[0][2]
+    i = img[offset+@rgbxy2idx(x,   y+1,w,h)]*kernel[1][2]
+    j = img[offset+@rgbxy2idx(x-1, y+1,w,h)]*kernel[2][2]
+    #derp = [a,b,c,d,e,f,g,i,j]
+    #console.log(derp)
+    r = a+b+c+d+e+f+g+i+j
+    r = Math.abs(r)
+    return @clamp(r)
+    
+  cloneWithBorder:(borderSz) =>
+    #Add a border to the image for convoltuions etc
+    # this should be private
+    bpp = 4 
+    oldSz = @width*@height*bpp
+    rgbBorderSz = bpp*borderSz
+    top = borderSz*((@width*bpp)+(borderSz*2*bpp))
+    bottom = borderSz*((@width*bpp)+(borderSz*2*bpp))
+    sides = 2*bpp*borderSz*@height
+    newSize = oldSz+top+bottom+sides
+    temp = new Uint8Array(newSize)
+    idx = 0
+    start = top+rgbBorderSz-1
+    stop = top+sides+oldSz-1
+    old = @getArray()
+    rowStop = start+(@width*bpp)
+    update = (@width*bpp)+(2*rgbBorderSz)
+    i = start
+    while i < stop
+      temp[++i] = old.data[idx++]
+      temp[++i] = old.data[idx++]
+      temp[++i] = old.data[idx++]
+      temp[++i] = old.data[idx++]
+      if i == rowStop 
+        i = i + (2*rgbBorderSz)
+        rowStop = rowStop+update
+    return temp
+    
+  cropBorderCopy:(img,borderSz) =>
+    # take a border image, crop out the border
+    # and return the image
+    # this should be a private function.
+    bpp = 4
+    oldSz = @height*@width*bpp
+    rgbBorderSz = bpp*borderSz
+    top = borderSz*((@width*bpp)+(borderSz*2*bpp))
+    bottom = borderSz*((@width*bpp)+(borderSz*2*bpp))
+    sides = 2*bpp*borderSz*@height
+    oldSz = bpp*@width*@height
+    idx = 0
+    start = top+rgbBorderSz
+    stop = top+sides+oldSz
+    output = @getArray()
+    rowStop = start+(@width*bpp)
+    update = @width*bpp+(2*rgbBorderSz)
+    i = start
+    while i < stop
+      output.data[idx++] = img[i++]
+      output.data[idx++] = img[i++]
+      output.data[idx++] = img[i++]
+      output.data[idx++] = img[i++]
+      if i >= rowStop 
+        i = i + (2*rgbBorderSz)
+        rowStop = rowStop+update
+    return new Image( output)
+      
   blur:(kernel_sz, gray=true) =>
     # Do a gaussian blur, 
     # the kernel must be odd
