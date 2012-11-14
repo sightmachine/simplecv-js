@@ -355,6 +355,233 @@ module.exports = class Image extends Model
     j = img[offset+@rgbxy2idx(x-1, y+1,w,h)]
     r = Math.max(a,b,c,d,e,f,g,i,j)
     return r
+    
+  dilate5:(iterations=1,grayscale=false)=>
+    if( iterations < 1 )
+      iterations = 1
+    border = 1
+    w = @width+(2*border)
+    h = @height+(2*border) 
+    out = @cloneWithBorder(border)
+    sz = out.length
+    temp = @cloneWithBorder(border)
+    
+    istart = border
+    istop = border+@width-1
+    jstart = border
+    jstop = border+@height-1
+
+    bpp = 4
+
+    a0 = 0; b0 = 0; c0 = 0; d0 = 0; e0 = 0; f0 = 0; g0 = 0; h0 = 0; l0 = 0; r0 = 0;
+    a1 = 0; b1 = 0; c1 = 0; d1 = 0; e1 = 0; f1 = 0; g1 = 0; h1 = 0; l1 = 0; r1 = 0;
+    a2 = 0; b2 = 0; c2 = 0; d2 = 0; e2 = 0; f2 = 0; g2 = 0; h2 = 0; l2 = 0; r2 = 0;
+
+    bppw = bpp*w
+    k = 1
+    while k <= iterations
+      j = jstart
+      while j < jstop # y
+        i = istart
+        while i < istop # x
+          if i == istart 
+            a0 = temp[0+(bppw*(j-1))+(bpp*(i-1))]
+            a1 = temp[1+(bppw*(j-1))+(bpp*(i-1))]
+            a2 = temp[2+(bppw*(j-1))+(bpp*(i-1))]
+            
+            b0 = temp[0+(bppw*(j))+  (bpp*(i-1))]
+            b1 = temp[1+(bppw*(j))+  (bpp*(i-1))]
+            b2 = temp[2+(bppw*(j))+  (bpp*(i-1))]
+            
+            c0 = temp[0+(bppw*(j+1))+(bpp*(i-1))]
+            c1 = temp[1+(bppw*(j+1))+(bpp*(i-1))]
+            c2 = temp[2+(bppw*(j+1))+(bpp*(i-1))]
+
+            d0 = temp[0+(bppw*(j-1))+(bpp*(i))]
+            d1 = temp[1+(bppw*(j-1))+(bpp*(i))]
+            d2 = temp[2+(bppw*(j-1))+(bpp*(i))]
+            
+            e0 = temp[0+(bppw*(j))+  (bpp*(i))]
+            e1 = temp[1+(bppw*(j))+  (bpp*(i))]
+            e2 = temp[2+(bppw*(j))+  (bpp*(i))]
+            
+            f0 = temp[0+(bppw*(j+1))+(bpp*(i))]
+            f1 = temp[1+(bppw*(j+1))+(bpp*(i))]
+            f2 = temp[2+(bppw*(j+1))+(bpp*(i))]
+
+            g0 = temp[0+(bppw*(j-1))+(bpp*(i+1))]
+            g1 = temp[1+(bppw*(j-1))+(bpp*(i+1))]
+            g2 = temp[2+(bppw*(j-1))+(bpp*(i+1))]
+            
+            h0 = temp[0+(bppw*(j))+  (bpp*(i+1))]
+            h1 = temp[1+(bppw*(j))+  (bpp*(i+1))]
+            h2 = temp[2+(bppw*(j))+  (bpp*(i+1))]
+            
+            l0 = temp[0+(bppw*(j+1))+(bpp*(i+1))]
+            l1 = temp[1+(bppw*(j+1))+(bpp*(i+1))]
+            l2 = temp[2+(bppw*(j+1))+(bpp*(i+1))]
+  
+            r0 = Math.max(a0,b0,c0,d0,e0,f0,g0,h0,l0)
+            r1 = Math.max(a1,b1,c1,d1,e1,f1,g1,h1,l1)
+            r2 = Math.max(a2,b2,c2,d2,e2,f2,g2,h2,l2)
+            out[0+(bppw*j)+(bpp*i)] = r0
+            out[1+(bppw*j)+(bpp*i)] = r1
+            out[2+(bppw*j)+(bpp*i)] = r2
+          else
+            # student body left
+            a0 = d0
+            b0 = e0
+            c0 = f0
+            d0 = g0
+            e0 = h0
+            f0 = l0
+            g0 = temp[0+(bppw*(j-1))+(bpp*(i+1))]
+            h0 = temp[0+(bppw*(j))+  (bpp*(i+1))]
+            l0 = temp[0+(bppw*(j+1))+(bpp*(i+1))]
+            r0 = Math.max(a0,b0,c0,d0,e0,f0,g0,h0,l0)
+            out[0+(bppw*j)+(bpp*i)] = r0
+
+            a1 = d1
+            b1 = e1
+            c1 = f1
+            d1 = g1
+            e1 = h1
+            f1 = l1
+            g1 = temp[1+(bppw*(j-1))+(bpp*(i+1))]
+            h1 = temp[1+(bppw*(j))+  (bpp*(i+1))]
+            l1 = temp[1+(bppw*(j+1))+(bpp*(i+1))]
+            r1 = Math.max(a1,b1,c1,d1,e1,f1,g1,h1,l1)
+            out[1+(bppw*j)+(bpp*i)] = r1
+
+            a2 = d2
+            b2 = e2
+            c2 = f2
+            d2 = g2
+            e2 = h2
+            f2 = l2
+            g2 = temp[2+(bppw*(j-2))+(bpp*(i+2))]
+            h2 = temp[2+(bppw*(j))+  (bpp*(i+2))]
+            l2 = temp[2+(bppw*(j+2))+(bpp*(i+2))]
+            r2 = Math.max(a2,b2,c2,d2,e2,f2,g2,h2,l2)
+            out[2+(bppw*j)+(bpp*i)] = r2
+                                                
+          i = i + 1
+        j = j + 1
+      k = k + 1
+        #temp = out
+    return @cropBorderCopy(out,border)
+    
+  dilate4:(iterations=1,grayscale=false)=>
+    if( iterations < 1 )
+      iterations = 1
+    border = 1
+    w = @width+(2*border)
+    h = @height+(2*border) 
+    out = @cloneWithBorder(border)
+    sz = out.length
+    temp = @cloneWithBorder(border)
+    
+    istart = border
+    istop = border+@width-1
+    jstart = border
+    jstop = border+@height-1
+
+    bpp = 4
+    a = 0; b = 0; c = 0; d = 0; e = 0; f = 0; g = 0; h = 0; l = 0; r = 0
+    bppw = bpp*w
+    k = 1
+    while k <= iterations
+      offset = 0
+      while offset <= 2
+        j = jstart
+        while j < jstop # y
+          i = istart
+          while i < istop # x
+            if i == istart 
+              a = temp[offset+(bppw*(j-1))+(bpp*(i-1))]
+              b = temp[offset+(bppw*(j))+  (bpp*(i-1))]
+              c = temp[offset+(bppw*(j+1))+(bpp*(i-1))]              
+              d = temp[offset+(bppw*(j-1))+(bpp*(i  ))]
+              e = temp[offset+(bppw*(j))+  (bpp*(i  ))]
+              f = temp[offset+(bppw*(j+1))+(bpp*(i  ))]
+                         
+              g = temp[offset+(bppw*(j-1))+(bpp*(i+1))]
+              h = temp[offset+(bppw*(j))+  (bpp*(i+1))]
+              l = temp[offset+(bppw*(j+1))+(bpp*(i+1))]
+
+              r = Math.max(a,b,c,d,e,f,g,h,l)
+              out[offset+(bppw*j)+(bpp*i)] = r
+            else
+              # student body left
+              a = d
+              b = e
+              c = f
+              d = g
+              e = h
+              f = l
+              g = temp[offset+(bppw*(j-1))+(bpp*(i+1))]
+              h = temp[offset+(bppw*(j))+  (bpp*(i+1))]
+              l = temp[offset+(bppw*(j+1))+(bpp*(i+1))]
+              r = Math.max(a,b,c,d,e,f,g,h,l)
+              out[offset+(bppw*j)+(bpp*i)] = r
+            i = i + 1
+          j = j + 1
+        offset = offset + 1
+      k = k + 1
+        #temp = out
+    return @cropBorderCopy(out,border)
+    
+  dilate3:(iterations=1,grayscale=false)=>
+    if( iterations < 1 )
+      iterations = 1
+    border = 1
+    w = @width+(2*border)
+    h = @height+(2*border) 
+    out = @cloneWithBorder(border)
+    sz = out.length
+    temp = @cloneWithBorder(border)
+    
+    istart = border
+    istop = border+@width-1
+    jstart = border
+    jstop = border+@height-1
+
+    bpp = 4
+    a = 0; b = 0; c = 0; d = 0; e = 0; f = 0; g = 0; h = 0; l = 0; r = 0
+    for k in [1..iterations]
+      for offset in [0..2]
+        for j in [jstart..jstop] #Y
+          for i in [istart..istop] #X
+            if i == istart 
+              a = temp[offset+(bpp*(j-1)*w)+(bpp*(i-1))]
+              b = temp[offset+(bpp*(j)*w)+  (bpp*(i-1))]
+              c = temp[offset+(bpp*(j+1)*w)+(bpp*(i-1))]
+              
+              d = temp[offset+(bpp*(j-1)*w)+(bpp*(i  ))]
+              e = temp[offset+(bpp*(j)*w)+  (bpp*(i  ))]
+              f = temp[offset+(bpp*(j+1)*w)+(bpp*(i  ))]
+                         
+              g = temp[offset+(bpp*(j-1)*w)+(bpp*(i+1))]
+              h = temp[offset+(bpp*(j)*w)+  (bpp*(i+1))]
+              l = temp[offset+(bpp*(j+1)*w)+(bpp*(i+1))]
+
+              r = Math.max(a,b,c,d,e,f,g,h,l)
+              out[offset+(bpp*j*w)+(bpp*i)] = r
+            else
+              # student body left
+              a = d
+              b = e
+              c = f
+              d = g
+              e = h
+              f = l
+              g = temp[offset+(bpp*(j-1)*w)+(bpp*(i+1))]
+              h = temp[offset+(bpp*(j)*w)+  (bpp*(i+1))]
+              l = temp[offset+(bpp*(j+1)*w)+(bpp*(i+1))]
+              r = Math.max(a,b,c,d,e,f,g,h,l)
+              out[offset+(bpp*j*w)+(bpp*i)] = r             
+        #temp = out
+    return @cropBorderCopy(out,border)
 
   dilate2:(iterations=1,grayscale=false)=>
     if( iterations < 1 )
@@ -413,7 +640,7 @@ module.exports = class Image extends Model
           out[@rgbxy2idx(i,j,w,h)]=@ptDilate(i,j,temp,w,h)
           out[1+@rgbxy2idx(i,j,w,h)]=@ptDilate(i,j,temp,w,hoffset=1)
           out[2+@rgbxy2idx(i,j,w,h)]=@ptDilate(i,j,temp,w,h,offset=2)
-      temp = out
+      #temp = out
     return @cropBorderCopy(out,border)
     
              
