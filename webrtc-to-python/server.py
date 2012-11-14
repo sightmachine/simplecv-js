@@ -24,6 +24,11 @@ class SimpleCVNamespace(BaseNamespace):
         sendstr = 'data:image/jpeg;base64,' + output.getvalue().encode('base64')
         self.emit('update', sendstr)
 
+    def on_blob(self, data):
+        import pdb;pdb.set_trace()
+        print 'Got blob data'
+        return
+
 # Flask routes
 app = Flask(__name__)
 @app.route('/')

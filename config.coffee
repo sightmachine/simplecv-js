@@ -30,6 +30,7 @@ exports.config =
           'vendor/scripts/ccv.js'
           'vendor/scripts/face.js'
           'vendor/scripts/processing-1.4.1.min.js'
+          'vendor/scripts/webcam-swiper-0.1.js'
         ]
 
     stylesheets:

@@ -4,6 +4,18 @@
 		<script type="text/javascript" src="static/jquery-1.7.2.js">
     </script>
     <script type="text/javascript" src="socket.io.js"></script>
+    <script type="text/javascript" src="canvas-to-blob.js"></script>
+    <script>
+			function dataURItoBlob(dataURI) {
+					var binary = atob(dataURI.split(',')[1]);
+					var array = [];
+					for(var i = 0; i < binary.length; i++) {
+							array.push(binary.charCodeAt(i));
+					}
+					blerb = new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
+					return blerb;
+			}
+    </script>
     <script>    
 			// socket.io specific code
 			var socket = io.connect();
