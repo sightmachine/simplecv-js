@@ -342,7 +342,45 @@ module.exports = class Image extends Model
   rgbxy2idx:(x,y,w,h) =>
     bpp = 4
     return (bpp*y*w)+(bpp*x)
-     
+
+  ptDilate:(x,y,img,w,h,offset=0)=>
+    a = img[offset+@rgbxy2idx(x+1, y-1,w,h)]
+    b = img[offset+@rgbxy2idx(x,   y-1,w,h)]
+    c = img[offset+@rgbxy2idx(x-1, y-1,w,h)]
+    d = img[offset+@rgbxy2idx(x+1, y,  w,h)]
+    e = img[offset+@rgbxy2idx(x,   y,  w,h)]
+    f = img[offset+@rgbxy2idx(x-1, y,  w,h)]
+    g = img[offset+@rgbxy2idx(x+1, y+1,w,h)]
+    i = img[offset+@rgbxy2idx(x,   y+1,w,h)]
+    j = img[offset+@rgbxy2idx(x-1, y+1,w,h)]
+    r = Math.max(a,b,c,d,e,f,g,i,j)
+    return r
+
+  dilate:(iterations=1,grayscale=false)=>
+    if( iterations < 1 )
+      iterations = 1
+    border = 1
+    w = @width+(2*border)
+    h = @height+(2*border) 
+    out = @cloneWithBorder(border)
+    sz = out.length
+    temp = @cloneWithBorder(border)
+    
+    istart = border
+    istop = border+@width-1
+    jstart = border
+    jstop = border+@height-1
+
+    for k in [1..iterations]
+      for j in [jstart..jstop] #Y
+        for i in [istart..istop] #X
+          out[@rgbxy2idx(i,j,w,h)]=@ptDilate(i,j,temp,w,h)
+          out[1+@rgbxy2idx(i,j,w,h)]=@ptDilate(i,j,temp,w,hoffset=1)
+          out[2+@rgbxy2idx(i,j,w,h)]=@ptDilate(i,j,temp,w,h,offset=2)
+      temp = out
+    return @cropBorderCopy(out,border)
+    
+             
   fakeConvolution:() =>
     border = 1
     w = @width+(2*border)
@@ -360,8 +398,6 @@ module.exports = class Image extends Model
     
     for j in [jstart..jstop] #Y
       for i in [istart..istop] #X
-        #do r/g/b
-        derp = @rgbxy2idx(i,j,w,h)
         out[@rgbxy2idx(i,j,w,h)]=@ptConvolve(i,j,temp,w,h,kernel)
         out[1+@rgbxy2idx(i,j,w,h)]=@ptConvolve(i,j,temp,w,h,kernel,offset=1)
         out[2+@rgbxy2idx(i,j,w,h)]=@ptConvolve(i,j,temp,w,h,kernel,offset=2)
