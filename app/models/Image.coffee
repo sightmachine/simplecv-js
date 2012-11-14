@@ -356,6 +356,42 @@ module.exports = class Image extends Model
     r = Math.max(a,b,c,d,e,f,g,i,j)
     return r
 
+  dilate2:(iterations=1,grayscale=false)=>
+    if( iterations < 1 )
+      iterations = 1
+    border = 1
+    w = @width+(2*border)
+    h = @height+(2*border) 
+    out = @cloneWithBorder(border)
+    sz = out.length
+    temp = @cloneWithBorder(border)
+    
+    istart = border
+    istop = border+@width-1
+    jstart = border
+    jstop = border+@height-1
+
+    bpp = 4
+
+    for k in [1..iterations]
+      for j in [jstart..jstop] #Y
+        for i in [istart..istop] #X
+          for offset in [0..2]
+            a = temp[offset+(bpp*(j-1)*w)+(bpp*(i+1))]
+            b = temp[offset+(bpp*(j-1)*w)+(bpp*(i  ))]
+            c = temp[offset+(bpp*(j-1)*w)+(bpp*(i-1))]
+            d = temp[offset+(bpp*(j)*w)+  (bpp*(i+1))]
+            e = temp[offset+(bpp*(j)*w)+  (bpp*(i  ))]
+            f = temp[offset+(bpp*(j)*w)+  (bpp*(i-1))]
+            g = temp[offset+(bpp*(j+1)*w)+(bpp*(i+1))]
+            h = temp[offset+(bpp*(j+1)*w)+(bpp*(i  ))]
+            l = temp[offset+(bpp*(j+1)*w)+(bpp*(i-1))]
+            r = Math.max(a,b,c,d,e,f,g,h,l)
+            out[offset+(bpp*j*w)+(bpp*i)] = r
+        #temp = out
+    return @cropBorderCopy(out,border)
+
+
   dilate:(iterations=1,grayscale=false)=>
     if( iterations < 1 )
       iterations = 1

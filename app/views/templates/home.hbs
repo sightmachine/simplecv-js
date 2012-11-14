@@ -40,8 +40,9 @@ console.log size
 # visible.
 Camera.beginStream((i)=>
   i = i.resize 320,240
-  i = i.blur(7,false)
-  #i = i.fakeConvolution()
+  i = i.grayscale().binarize().
+  j = i.dilate()
+  k = i.dilate2()
   i.show display
 )
           </textarea>
