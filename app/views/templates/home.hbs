@@ -40,7 +40,7 @@ console.log size
 # visible.
 Camera.beginStream((i)=>
   i = i.resize 320,240
-  i = i.dilate(1,true)
+  i = i.edges()
   i.show display
 )
           </textarea>

@@ -153,11 +153,62 @@ module.exports = class Image extends Model
   subtract:(image) =>
     matrixOne = @getArray(); matrixTwo = image.getArray(); i = 0;
     while i < matrixOne.data.length
+      matrixTwo.data[i] = @clamp(matrixTwo[i]-matrixOne.data[i])
+      matrixTwo.data[i+1] = @clamp(matrixTwo.data[i+1]-matrixOne.data[i+1])
+      matrixTwo.data[i+2] = @clamp(matrixTwo.data[i+2]-matrixOne.data[i+2])
+      i += 4
+    return new Image(matrixTwo)
+
+  # Simple subtract algorithm to find the difference
+  # between two images.
+  add:(image) =>
+    matrixOne = @getArray(); matrixTwo = image.getArray(); i = 0;
+    while i < matrixOne.data.length
+      matrixTwo.data[i] = @clamp(matrixTwo[i]+matrixOne.data[i])
+      matrixTwo.data[i+1] = @clamp(matrixTwo.data[i+1]+matrixOne.data[i+1])
+      matrixTwo.data[i+2] = @clamp(matrixTwo.data[i+2]+matrixOne.data[i+2])
+      i += 4
+    return new Image(matrixTwo)
+
+  mult:(image) =>
+    matrixOne = @getArray(); matrixTwo = image.getArray(); i = 0;
+    while i < matrixOne.data.length
+      matrixTwo.data[i] = @clamp(matrixTwo[i]*matrixOne.data[i])
+      matrixTwo.data[i+1] = @clamp(matrixTwo.data[i+1]*matrixOne.data[i+1])
+      matrixTwo.data[i+2] = @clamp(matrixTwo.data[i+2]*matrixOne.data[i+2])
+      i += 4
+    return new Image(matrixTwo)
+
+  lighten:(n=8) =>
+    matrixOne = @getArray(); i = 0;
+    while i < matrixOne.data.length
+      matrixOne.data[i] = @clamp(matrixOne.data[i]+n)
+      matrixOne.data[i+1] = @clamp(matrixOne.data[i+1]+n)
+      matrixOne.data[i+2] = @clamp(matrixOne.data[i+2]+n)
+      i += 4
+    return new Image(matrixOne)
+
+  darken:(n=8) =>
+    matrixOne = @getArray(); i = 0;
+    while i < matrixOne.data.length
+      matrixOne.data[i] = @clamp(matrixOne.data[i]-n)
+      matrixOne.data[i+1] = @clamp(matrixOne.data[i+1]-n)
+      matrixOne.data[i+2] = @clamp(matrixOne.data[i+2]-n)
+      i += 4
+    return new Image(matrixOne)
+
+# Simple subtract algorithm to find the difference
+  # between two images.
+  subtract:(image) =>
+    matrixOne = @getArray(); matrixTwo = image.getArray(); i = 0;
+    while i < matrixOne.data.length
       matrixTwo.data[i] -= matrixOne.data[i];
       matrixTwo.data[i+1] -= matrixOne.data[i+1];
       matrixTwo.data[i+2] -= matrixOne.data[i+2];
       i += 4
-    return new Image(matrixTwo) 
+    return new Image(matrixTwo)
+
+  
   
   # Simple multiply algorithm to increase saturation
   # in the image. First subtracts a grey level and
@@ -453,11 +504,20 @@ module.exports = class Image extends Model
             temp[m]=out[m]
       return @cropBorderCopy(out,border)
       
-  # edges:(grayscale=false)=>
-  #   ximg = @sobelX(grayscale)
-  #   yimg = @sobelY(grayscale)
-  #   out = @getArray()
-   
+  edges:()=>
+    # so this is just the sobel magnitude. if we were really
+    # cool we would do it in floating point and scale it to
+    # the maximum. 
+    ximg = @sobelX()
+    yimg = @sobelY()
+    out = @getArray()
+    xv = ximg.getArray()
+    yv = yimg.getArray()
+    for i in [0..xv.data.length]
+      d = Math.sqrt((xv.data[i]*xv.data[i])+(yv.data[i]*yv.data[i]))
+      out.data[i] = @clamp(d) # we reall should scale versus clamp
+    return new Image(out)
+     
   sobelY:(grayscale=false)=>
     kernel = [[-1.0,0.0,1.0],[-2.0,0.0,2.0],[-1.0,0.0,1.0]]
     return @kernel3x3(kernel,grayscale)
