@@ -452,53 +452,77 @@ module.exports = class Image extends Model
           for m in [0..temp.length]
             temp[m]=out[m]
       return @cropBorderCopy(out,border)
+      
+  # edges:(grayscale=false)=>
+  #   ximg = @sobelX(grayscale)
+  #   yimg = @sobelY(grayscale)
+  #   out = @getArray()
+   
+  sobelY:(grayscale=false)=>
+    kernel = [[-1.0,0.0,1.0],[-2.0,0.0,2.0],[-1.0,0.0,1.0]]
+    return @kernel3x3(kernel,grayscale)
+
+  sobelX:(grayscale=false)=>
+    kernel = [[-1.0,-2.0,-1.0],[0.0,0.0,0.0],[1.0,2.0,1.0]]
+    return @kernel3x3(kernel,grayscale)
+    
+  kernel3x3:(kernel,grayscale)=>
+    border = 1
+    w = @width+(2*border)
+    h = @height+(2*border) 
+    istart = border
+    istop = border+@width-1
+    jstart = border
+    jstop = border+@height-1
+
+    if( grayscale )
+      out = @cloneGrayWithBorder(border)
+      temp = @cloneGrayWithBorder(border)
+      #istart = istart + 1  
+      for j in [jstart..jstop] #Y
+        for i in [istart..istop] #X
+          vals = []
+          vals.push(temp[((j-1)*w)+((i+1))]*kernel[0][0])
+          vals.push(temp[((j-1)*w)+((i  ))]*kernel[0][1])
+          vals.push(temp[((j-1)*w)+((i-1))]*kernel[0][2])
+          vals.push(temp[((j)*w)+  ((i+1))]*kernel[1][0])
+          vals.push(temp[((j)*w)+  ((i  ))]*kernel[1][1])
+          vals.push(temp[((j)*w)+  ((i-1))]*kernel[1][1])
+          vals.push(temp[((j+1)*w)+((i+1))]*kernel[2][0])
+          vals.push(temp[((j+1)*w)+((i  ))]*kernel[2][1])
+          vals.push(temp[((j+1)*w)+((i-1))]*kernel[2][2])
+          acc = 0
+          for v in vals
+            acc += v          
+          out[(j*w)+(i)] = @clamp(Math.abs(acc))
+      return  @cropBorderCopyGray(out,border)
+    else
+      out = @cloneWithBorder(border)
+      temp = @cloneWithBorder(border)
+      bpp = 4
+      for j in [jstart..jstop] #Y
+        for i in [istart..istop] #X
+          for offset in [0..2]
+            vals = []
+            vals.push(temp[offset+(bpp*(j-1)*w)+(bpp*(i+1))]*kernel[0][0])
+            vals.push(temp[offset+(bpp*(j-1)*w)+(bpp*(i  ))]*kernel[0][1])
+            vals.push(temp[offset+(bpp*(j-1)*w)+(bpp*(i-1))]*kernel[0][2])
+            vals.push(temp[offset+(bpp*(j)*w)+  (bpp*(i+1))]*kernel[1][0])
+            vals.push(temp[offset+(bpp*(j)*w)+  (bpp*(i  ))]*kernel[1][1])
+            vals.push(temp[offset+(bpp*(j)*w)+  (bpp*(i-1))]*kernel[1][2])
+            vals.push(temp[offset+(bpp*(j+1)*w)+(bpp*(i+1))]*kernel[2][0])
+            vals.push(temp[offset+(bpp*(j+1)*w)+(bpp*(i  ))]*kernel[2][1])
+            vals.push(temp[offset+(bpp*(j+1)*w)+(bpp*(i-1))]*kernel[2][2])
+            acc = 0
+            for v in vals
+              acc += v          
+            out[offset+(bpp*j*w)+(bpp*i)] = @clamp(Math.abs(acc))
+      return @cropBorderCopy(out,border)
 
               
-  # fakeConvolution:() =>
-  #   border = 1
-  #   w = @width+(2*border)
-  #   h = @height+(2*border) 
-  #   out = @cloneWithBorder(border)
-  #   sz = out.length
-  #   temp = @cloneWithBorder(border)
-    
-  #   kernel = [[-1.0,-2.0,-1.0],[0.0,0.0,0.0],[1.0,2.0,1.0]]
-  #   #kernel = [[1,1,1],[1,1,1],[1,1,1]]
-  #   istart = border
-  #   istop = border+@width-1
-  #   jstart = border
-  #   jstop = border+@height-1
-    
-  #   for j in [jstart..jstop] #Y
-  #     for i in [istart..istop] #X
-  #       out[@rgbxy2idx(i,j,w,h)]=@ptConvolve(i,j,temp,w,h,kernel)
-  #       out[1+@rgbxy2idx(i,j,w,h)]=@ptConvolve(i,j,temp,w,h,kernel,offset=1)
-  #       out[2+@rgbxy2idx(i,j,w,h)]=@ptConvolve(i,j,temp,w,h,kernel,offset=2)
-  #   return @cropBorderCopy(out,border)
+  clamp:(x,max=255,min=0) =>
+    return Math.max(min, Math.min(max, x))    
 
-  # clamp:(x,max=255,min=0) =>
-  #   if x > max 
-  #     return max
-  #   if x < min
-  #     return min
-  #   return x
-       
-  # ptConvolve:(x,y,img,w,h,kernel,offset=0,ksz=3)=>
-  #   a = img[offset+@rgbxy2idx(x+1, y-1,w,h)]*kernel[0][0]
-  #   b = img[offset+@rgbxy2idx(x,   y-1,w,h)]*kernel[1][0]
-  #   c = img[offset+@rgbxy2idx(x-1, y-1,w,h)]*kernel[2][0]
-  #   d = img[offset+@rgbxy2idx(x+1, y,  w,h)]*kernel[0][1]
-  #   e = img[offset+@rgbxy2idx(x,   y,  w,h)]*kernel[1][1]
-  #   f = img[offset+@rgbxy2idx(x-1, y,  w,h)]*kernel[2][1]
-  #   g = img[offset+@rgbxy2idx(x+1, y+1,w,h)]*kernel[0][2]
-  #   i = img[offset+@rgbxy2idx(x,   y+1,w,h)]*kernel[1][2]
-  #   j = img[offset+@rgbxy2idx(x-1, y+1,w,h)]*kernel[2][2]
-  #   #derp = [a,b,c,d,e,f,g,i,j]
-  #   #console.log(derp)
-  #   r = a+b+c+d+e+f+g+i+j
-  #   r = Math.abs(r)
-  #   return @clamp(r)
-    
   cloneWithBorder:(borderSz) =>
     #Add a border to the image for convoltuions etc
     # this should be private
