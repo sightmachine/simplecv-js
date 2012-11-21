@@ -153,11 +153,62 @@ module.exports = class Image extends Model
   subtract:(image) =>
     matrixOne = @getArray(); matrixTwo = image.getArray(); i = 0;
     while i < matrixOne.data.length
+      matrixTwo.data[i] = @clamp(matrixTwo[i]-matrixOne.data[i])
+      matrixTwo.data[i+1] = @clamp(matrixTwo.data[i+1]-matrixOne.data[i+1])
+      matrixTwo.data[i+2] = @clamp(matrixTwo.data[i+2]-matrixOne.data[i+2])
+      i += 4
+    return new Image(matrixTwo)
+
+  # Simple subtract algorithm to find the difference
+  # between two images.
+  add:(image) =>
+    matrixOne = @getArray(); matrixTwo = image.getArray(); i = 0;
+    while i < matrixOne.data.length
+      matrixTwo.data[i] = @clamp(matrixTwo[i]+matrixOne.data[i])
+      matrixTwo.data[i+1] = @clamp(matrixTwo.data[i+1]+matrixOne.data[i+1])
+      matrixTwo.data[i+2] = @clamp(matrixTwo.data[i+2]+matrixOne.data[i+2])
+      i += 4
+    return new Image(matrixTwo)
+
+  mult:(image) =>
+    matrixOne = @getArray(); matrixTwo = image.getArray(); i = 0;
+    while i < matrixOne.data.length
+      matrixTwo.data[i] = @clamp(matrixTwo[i]*matrixOne.data[i])
+      matrixTwo.data[i+1] = @clamp(matrixTwo.data[i+1]*matrixOne.data[i+1])
+      matrixTwo.data[i+2] = @clamp(matrixTwo.data[i+2]*matrixOne.data[i+2])
+      i += 4
+    return new Image(matrixTwo)
+
+  lighten:(n=8) =>
+    matrixOne = @getArray(); i = 0;
+    while i < matrixOne.data.length
+      matrixOne.data[i] = @clamp(matrixOne.data[i]+n)
+      matrixOne.data[i+1] = @clamp(matrixOne.data[i+1]+n)
+      matrixOne.data[i+2] = @clamp(matrixOne.data[i+2]+n)
+      i += 4
+    return new Image(matrixOne)
+
+  darken:(n=8) =>
+    matrixOne = @getArray(); i = 0;
+    while i < matrixOne.data.length
+      matrixOne.data[i] = @clamp(matrixOne.data[i]-n)
+      matrixOne.data[i+1] = @clamp(matrixOne.data[i+1]-n)
+      matrixOne.data[i+2] = @clamp(matrixOne.data[i+2]-n)
+      i += 4
+    return new Image(matrixOne)
+
+# Simple subtract algorithm to find the difference
+  # between two images.
+  subtract:(image) =>
+    matrixOne = @getArray(); matrixTwo = image.getArray(); i = 0;
+    while i < matrixOne.data.length
       matrixTwo.data[i] -= matrixOne.data[i];
       matrixTwo.data[i+1] -= matrixOne.data[i+1];
       matrixTwo.data[i+2] -= matrixOne.data[i+2];
       i += 4
-    return new Image(matrixTwo) 
+    return new Image(matrixTwo)
+
+  
   
   # Simple multiply algorithm to increase saturation
   # in the image. First subtracts a grey level and
@@ -338,357 +389,200 @@ module.exports = class Image extends Model
       j = j + 1
     return new Image(out)
 
-
-  rgbxy2idx:(x,y,w,h) =>
-    bpp = 4
-    return (bpp*y*w)+(bpp*x)
-
-  ptDilate:(x,y,img,w,h,offset=0)=>
-    a = img[offset+@rgbxy2idx(x+1, y-1,w,h)]
-    b = img[offset+@rgbxy2idx(x,   y-1,w,h)]
-    c = img[offset+@rgbxy2idx(x-1, y-1,w,h)]
-    d = img[offset+@rgbxy2idx(x+1, y,  w,h)]
-    e = img[offset+@rgbxy2idx(x,   y,  w,h)]
-    f = img[offset+@rgbxy2idx(x-1, y,  w,h)]
-    g = img[offset+@rgbxy2idx(x+1, y+1,w,h)]
-    i = img[offset+@rgbxy2idx(x,   y+1,w,h)]
-    j = img[offset+@rgbxy2idx(x-1, y+1,w,h)]
-    r = Math.max(a,b,c,d,e,f,g,i,j)
-    return r
-    
-  dilate5:(iterations=1,grayscale=false)=>
-    if( iterations < 1 )
-      iterations = 1
-    border = 1
-    w = @width+(2*border)
-    h = @height+(2*border) 
-    out = @cloneWithBorder(border)
-    sz = out.length
-    temp = @cloneWithBorder(border)
-    
-    istart = border
-    istop = border+@width-1
-    jstart = border
-    jstop = border+@height-1
-
-    bpp = 4
-
-    a0 = 0; b0 = 0; c0 = 0; d0 = 0; e0 = 0; f0 = 0; g0 = 0; h0 = 0; l0 = 0; r0 = 0;
-    a1 = 0; b1 = 0; c1 = 0; d1 = 0; e1 = 0; f1 = 0; g1 = 0; h1 = 0; l1 = 0; r1 = 0;
-    a2 = 0; b2 = 0; c2 = 0; d2 = 0; e2 = 0; f2 = 0; g2 = 0; h2 = 0; l2 = 0; r2 = 0;
-
-    bppw = bpp*w
-    k = 1
-    while k <= iterations
-      j = jstart
-      while j < jstop # y
-        i = istart
-        while i < istop # x
-          if i == istart 
-            a0 = temp[0+(bppw*(j-1))+(bpp*(i-1))]
-            a1 = temp[1+(bppw*(j-1))+(bpp*(i-1))]
-            a2 = temp[2+(bppw*(j-1))+(bpp*(i-1))]
-            
-            b0 = temp[0+(bppw*(j))+  (bpp*(i-1))]
-            b1 = temp[1+(bppw*(j))+  (bpp*(i-1))]
-            b2 = temp[2+(bppw*(j))+  (bpp*(i-1))]
-            
-            c0 = temp[0+(bppw*(j+1))+(bpp*(i-1))]
-            c1 = temp[1+(bppw*(j+1))+(bpp*(i-1))]
-            c2 = temp[2+(bppw*(j+1))+(bpp*(i-1))]
-
-            d0 = temp[0+(bppw*(j-1))+(bpp*(i))]
-            d1 = temp[1+(bppw*(j-1))+(bpp*(i))]
-            d2 = temp[2+(bppw*(j-1))+(bpp*(i))]
-            
-            e0 = temp[0+(bppw*(j))+  (bpp*(i))]
-            e1 = temp[1+(bppw*(j))+  (bpp*(i))]
-            e2 = temp[2+(bppw*(j))+  (bpp*(i))]
-            
-            f0 = temp[0+(bppw*(j+1))+(bpp*(i))]
-            f1 = temp[1+(bppw*(j+1))+(bpp*(i))]
-            f2 = temp[2+(bppw*(j+1))+(bpp*(i))]
-
-            g0 = temp[0+(bppw*(j-1))+(bpp*(i+1))]
-            g1 = temp[1+(bppw*(j-1))+(bpp*(i+1))]
-            g2 = temp[2+(bppw*(j-1))+(bpp*(i+1))]
-            
-            h0 = temp[0+(bppw*(j))+  (bpp*(i+1))]
-            h1 = temp[1+(bppw*(j))+  (bpp*(i+1))]
-            h2 = temp[2+(bppw*(j))+  (bpp*(i+1))]
-            
-            l0 = temp[0+(bppw*(j+1))+(bpp*(i+1))]
-            l1 = temp[1+(bppw*(j+1))+(bpp*(i+1))]
-            l2 = temp[2+(bppw*(j+1))+(bpp*(i+1))]
-  
-            r0 = Math.max(a0,b0,c0,d0,e0,f0,g0,h0,l0)
-            r1 = Math.max(a1,b1,c1,d1,e1,f1,g1,h1,l1)
-            r2 = Math.max(a2,b2,c2,d2,e2,f2,g2,h2,l2)
-            out[0+(bppw*j)+(bpp*i)] = r0
-            out[1+(bppw*j)+(bpp*i)] = r1
-            out[2+(bppw*j)+(bpp*i)] = r2
-          else
-            # student body left
-            a0 = d0
-            b0 = e0
-            c0 = f0
-            d0 = g0
-            e0 = h0
-            f0 = l0
-            g0 = temp[0+(bppw*(j-1))+(bpp*(i+1))]
-            h0 = temp[0+(bppw*(j))+  (bpp*(i+1))]
-            l0 = temp[0+(bppw*(j+1))+(bpp*(i+1))]
-            r0 = Math.max(a0,b0,c0,d0,e0,f0,g0,h0,l0)
-            out[0+(bppw*j)+(bpp*i)] = r0
-
-            a1 = d1
-            b1 = e1
-            c1 = f1
-            d1 = g1
-            e1 = h1
-            f1 = l1
-            g1 = temp[1+(bppw*(j-1))+(bpp*(i+1))]
-            h1 = temp[1+(bppw*(j))+  (bpp*(i+1))]
-            l1 = temp[1+(bppw*(j+1))+(bpp*(i+1))]
-            r1 = Math.max(a1,b1,c1,d1,e1,f1,g1,h1,l1)
-            out[1+(bppw*j)+(bpp*i)] = r1
-
-            a2 = d2
-            b2 = e2
-            c2 = f2
-            d2 = g2
-            e2 = h2
-            f2 = l2
-            g2 = temp[2+(bppw*(j-2))+(bpp*(i+2))]
-            h2 = temp[2+(bppw*(j))+  (bpp*(i+2))]
-            l2 = temp[2+(bppw*(j+2))+(bpp*(i+2))]
-            r2 = Math.max(a2,b2,c2,d2,e2,f2,g2,h2,l2)
-            out[2+(bppw*j)+(bpp*i)] = r2
-                                                
-          i = i + 1
-        j = j + 1
-      k = k + 1
-        #temp = out
-    return @cropBorderCopy(out,border)
-    
-  dilate4:(iterations=1,grayscale=false)=>
-    if( iterations < 1 )
-      iterations = 1
-    border = 1
-    w = @width+(2*border)
-    h = @height+(2*border) 
-    out = @cloneWithBorder(border)
-    sz = out.length
-    temp = @cloneWithBorder(border)
-    
-    istart = border
-    istop = border+@width-1
-    jstart = border
-    jstop = border+@height-1
-
-    bpp = 4
-    a = 0; b = 0; c = 0; d = 0; e = 0; f = 0; g = 0; h = 0; l = 0; r = 0
-    bppw = bpp*w
-    k = 1
-    while k <= iterations
-      offset = 0
-      while offset <= 2
-        j = jstart
-        while j < jstop # y
-          i = istart
-          while i < istop # x
-            if i == istart 
-              a = temp[offset+(bppw*(j-1))+(bpp*(i-1))]
-              b = temp[offset+(bppw*(j))+  (bpp*(i-1))]
-              c = temp[offset+(bppw*(j+1))+(bpp*(i-1))]              
-              d = temp[offset+(bppw*(j-1))+(bpp*(i  ))]
-              e = temp[offset+(bppw*(j))+  (bpp*(i  ))]
-              f = temp[offset+(bppw*(j+1))+(bpp*(i  ))]
-                         
-              g = temp[offset+(bppw*(j-1))+(bpp*(i+1))]
-              h = temp[offset+(bppw*(j))+  (bpp*(i+1))]
-              l = temp[offset+(bppw*(j+1))+(bpp*(i+1))]
-
-              r = Math.max(a,b,c,d,e,f,g,h,l)
-              out[offset+(bppw*j)+(bpp*i)] = r
-            else
-              # student body left
-              a = d
-              b = e
-              c = f
-              d = g
-              e = h
-              f = l
-              g = temp[offset+(bppw*(j-1))+(bpp*(i+1))]
-              h = temp[offset+(bppw*(j))+  (bpp*(i+1))]
-              l = temp[offset+(bppw*(j+1))+(bpp*(i+1))]
-              r = Math.max(a,b,c,d,e,f,g,h,l)
-              out[offset+(bppw*j)+(bpp*i)] = r
-            i = i + 1
-          j = j + 1
-        offset = offset + 1
-      k = k + 1
-        #temp = out
-    return @cropBorderCopy(out,border)
-    
-  dilate3:(iterations=1,grayscale=false)=>
-    if( iterations < 1 )
-      iterations = 1
-    border = 1
-    w = @width+(2*border)
-    h = @height+(2*border) 
-    out = @cloneWithBorder(border)
-    sz = out.length
-    temp = @cloneWithBorder(border)
-    
-    istart = border
-    istop = border+@width-1
-    jstart = border
-    jstop = border+@height-1
-
-    bpp = 4
-    a = 0; b = 0; c = 0; d = 0; e = 0; f = 0; g = 0; h = 0; l = 0; r = 0
-    for k in [1..iterations]
-      for offset in [0..2]
-        for j in [jstart..jstop] #Y
-          for i in [istart..istop] #X
-            if i == istart 
-              a = temp[offset+(bpp*(j-1)*w)+(bpp*(i-1))]
-              b = temp[offset+(bpp*(j)*w)+  (bpp*(i-1))]
-              c = temp[offset+(bpp*(j+1)*w)+(bpp*(i-1))]
-              
-              d = temp[offset+(bpp*(j-1)*w)+(bpp*(i  ))]
-              e = temp[offset+(bpp*(j)*w)+  (bpp*(i  ))]
-              f = temp[offset+(bpp*(j+1)*w)+(bpp*(i  ))]
-                         
-              g = temp[offset+(bpp*(j-1)*w)+(bpp*(i+1))]
-              h = temp[offset+(bpp*(j)*w)+  (bpp*(i+1))]
-              l = temp[offset+(bpp*(j+1)*w)+(bpp*(i+1))]
-
-              r = Math.max(a,b,c,d,e,f,g,h,l)
-              out[offset+(bpp*j*w)+(bpp*i)] = r
-            else
-              # student body left
-              a = d
-              b = e
-              c = f
-              d = g
-              e = h
-              f = l
-              g = temp[offset+(bpp*(j-1)*w)+(bpp*(i+1))]
-              h = temp[offset+(bpp*(j)*w)+  (bpp*(i+1))]
-              l = temp[offset+(bpp*(j+1)*w)+(bpp*(i+1))]
-              r = Math.max(a,b,c,d,e,f,g,h,l)
-              out[offset+(bpp*j*w)+(bpp*i)] = r             
-        #temp = out
-    return @cropBorderCopy(out,border)
-
-  dilate2:(iterations=1,grayscale=false)=>
-    if( iterations < 1 )
-      iterations = 1
-    border = 1
-    w = @width+(2*border)
-    h = @height+(2*border) 
-    out = @cloneWithBorder(border)
-    sz = out.length
-    temp = @cloneWithBorder(border)
-    
-    istart = border
-    istop = border+@width-1
-    jstart = border
-    jstop = border+@height-1
-
-    bpp = 4
-
-    for k in [1..iterations]
-      for j in [jstart..jstop] #Y
-        for i in [istart..istop] #X
-          for offset in [0..2]
-            a = temp[offset+(bpp*(j-1)*w)+(bpp*(i+1))]
-            b = temp[offset+(bpp*(j-1)*w)+(bpp*(i  ))]
-            c = temp[offset+(bpp*(j-1)*w)+(bpp*(i-1))]
-            d = temp[offset+(bpp*(j)*w)+  (bpp*(i+1))]
-            e = temp[offset+(bpp*(j)*w)+  (bpp*(i  ))]
-            f = temp[offset+(bpp*(j)*w)+  (bpp*(i-1))]
-            g = temp[offset+(bpp*(j+1)*w)+(bpp*(i+1))]
-            h = temp[offset+(bpp*(j+1)*w)+(bpp*(i  ))]
-            l = temp[offset+(bpp*(j+1)*w)+(bpp*(i-1))]
-            r = Math.max(a,b,c,d,e,f,g,h,l)
-            out[offset+(bpp*j*w)+(bpp*i)] = r
-        #temp = out
-    return @cropBorderCopy(out,border)
-
-
   dilate:(iterations=1,grayscale=false)=>
     if( iterations < 1 )
       iterations = 1
     border = 1
     w = @width+(2*border)
     h = @height+(2*border) 
-    out = @cloneWithBorder(border)
-    sz = out.length
-    temp = @cloneWithBorder(border)
-    
     istart = border
     istop = border+@width-1
     jstart = border
     jstop = border+@height-1
 
-    for k in [1..iterations]
-      for j in [jstart..jstop] #Y
-        for i in [istart..istop] #X
-          out[@rgbxy2idx(i,j,w,h)]=@ptDilate(i,j,temp,w,h)
-          out[1+@rgbxy2idx(i,j,w,h)]=@ptDilate(i,j,temp,w,hoffset=1)
-          out[2+@rgbxy2idx(i,j,w,h)]=@ptDilate(i,j,temp,w,h,offset=2)
-      #temp = out
-    return @cropBorderCopy(out,border)
-    
-             
-  fakeConvolution:() =>
+    if( grayscale )
+      out = @cloneGrayWithBorder(border)
+      temp = @cloneGrayWithBorder(border)
+      #istart = istart + 1    
+      for k in [1..iterations]
+        for j in [jstart..jstop] #Y
+          for i in [istart..istop] #X
+            a = temp[((j-1)*w)+((i+1))]
+            b = temp[((j-1)*w)+((i  ))]
+            c = temp[((j-1)*w)+((i-1))]
+            d = temp[((j)*w)+  ((i+1))]
+            e = temp[((j)*w)+  ((i  ))]
+            f = temp[((j)*w)+  ((i-1))]
+            g = temp[((j+1)*w)+((i+1))]
+            h = temp[((j+1)*w)+((i  ))]
+            l = temp[((j+1)*w)+((i-1))]
+            r = Math.max(a,b,c,d,e,f,g,h,l)
+            out[(j*w)+(i)] = r
+        if( iterations > 1 )
+          for m in [0..temp.length]
+            temp[m]=out[m]
+      return  @cropBorderCopyGray(out,border)
+    else
+      out = @cloneWithBorder(border)
+      temp = @cloneWithBorder(border)
+      bpp = 4
+      for k in [1..iterations]
+        for j in [jstart..jstop] #Y
+          for i in [istart..istop] #X
+            for offset in [0..2]
+              a = temp[offset+(bpp*(j-1)*w)+(bpp*(i+1))]
+              b = temp[offset+(bpp*(j-1)*w)+(bpp*(i  ))]
+              c = temp[offset+(bpp*(j-1)*w)+(bpp*(i-1))]
+              d = temp[offset+(bpp*(j)*w)+  (bpp*(i+1))]
+              e = temp[offset+(bpp*(j)*w)+  (bpp*(i  ))]
+              f = temp[offset+(bpp*(j)*w)+  (bpp*(i-1))]
+              g = temp[offset+(bpp*(j+1)*w)+(bpp*(i+1))]
+              h = temp[offset+(bpp*(j+1)*w)+(bpp*(i  ))]
+              l = temp[offset+(bpp*(j+1)*w)+(bpp*(i-1))]
+              r = Math.max(a,b,c,d,e,f,g,h,l)
+              out[offset+(bpp*j*w)+(bpp*i)] = r
+        if( iterations > 1 )
+          for m in [0..temp.length]
+            temp[m]=out[m]
+      return @cropBorderCopy(out,border)
+
+
+  erode:(iterations=1,grayscale=false)=>
+    if( iterations < 1 )
+      iterations = 1
     border = 1
     w = @width+(2*border)
     h = @height+(2*border) 
-    out = @cloneWithBorder(border)
-    sz = out.length
-    temp = @cloneWithBorder(border)
-    
-    kernel = [[-1.0,-2.0,-1.0],[0.0,0.0,0.0],[1.0,2.0,1.0]]
-    #kernel = [[1,1,1],[1,1,1],[1,1,1]]
     istart = border
     istop = border+@width-1
     jstart = border
     jstop = border+@height-1
-    
-    for j in [jstart..jstop] #Y
-      for i in [istart..istop] #X
-        out[@rgbxy2idx(i,j,w,h)]=@ptConvolve(i,j,temp,w,h,kernel)
-        out[1+@rgbxy2idx(i,j,w,h)]=@ptConvolve(i,j,temp,w,h,kernel,offset=1)
-        out[2+@rgbxy2idx(i,j,w,h)]=@ptConvolve(i,j,temp,w,h,kernel,offset=2)
-    return @cropBorderCopy(out,border)
 
-  clamp:(x,max=255,min=0) =>
-    if x > max 
-      return max
-    if x < min
-      return min
-    return x
-       
-  ptConvolve:(x,y,img,w,h,kernel,offset=0,ksz=3)=>
-    a = img[offset+@rgbxy2idx(x+1, y-1,w,h)]*kernel[0][0]
-    b = img[offset+@rgbxy2idx(x,   y-1,w,h)]*kernel[1][0]
-    c = img[offset+@rgbxy2idx(x-1, y-1,w,h)]*kernel[2][0]
-    d = img[offset+@rgbxy2idx(x+1, y,  w,h)]*kernel[0][1]
-    e = img[offset+@rgbxy2idx(x,   y,  w,h)]*kernel[1][1]
-    f = img[offset+@rgbxy2idx(x-1, y,  w,h)]*kernel[2][1]
-    g = img[offset+@rgbxy2idx(x+1, y+1,w,h)]*kernel[0][2]
-    i = img[offset+@rgbxy2idx(x,   y+1,w,h)]*kernel[1][2]
-    j = img[offset+@rgbxy2idx(x-1, y+1,w,h)]*kernel[2][2]
-    #derp = [a,b,c,d,e,f,g,i,j]
-    #console.log(derp)
-    r = a+b+c+d+e+f+g+i+j
-    r = Math.abs(r)
-    return @clamp(r)
+    if( grayscale )
+      out = @cloneGrayWithBorder(border)
+      temp = @cloneGrayWithBorder(border)
+      #istart = istart + 1    
+      for k in [1..iterations]
+        for j in [jstart..jstop] #Y
+          for i in [istart..istop] #X
+            a = temp[((j-1)*w)+((i+1))]
+            b = temp[((j-1)*w)+((i  ))]
+            c = temp[((j-1)*w)+((i-1))]
+            d = temp[((j)*w)+  ((i+1))]
+            e = temp[((j)*w)+  ((i  ))]
+            f = temp[((j)*w)+  ((i-1))]
+            g = temp[((j+1)*w)+((i+1))]
+            h = temp[((j+1)*w)+((i  ))]
+            l = temp[((j+1)*w)+((i-1))]
+            r = Math.min(a,b,c,d,e,f,g,h,l)
+            out[(j*w)+(i)] = r
+        if( iterations > 1 )
+          for m in [0..temp.length]
+            temp[m]=out[m]
+      return  @cropBorderCopyGray(out,border)
+    else
+      out = @cloneWithBorder(border)
+      temp = @cloneWithBorder(border)
+      bpp = 4
+      for k in [1..iterations]
+        for j in [jstart..jstop] #Y
+          for i in [istart..istop] #X
+            for offset in [0..2]
+              a = temp[offset+(bpp*(j-1)*w)+(bpp*(i+1))]
+              b = temp[offset+(bpp*(j-1)*w)+(bpp*(i  ))]
+              c = temp[offset+(bpp*(j-1)*w)+(bpp*(i-1))]
+              d = temp[offset+(bpp*(j)*w)+  (bpp*(i+1))]
+              e = temp[offset+(bpp*(j)*w)+  (bpp*(i  ))]
+              f = temp[offset+(bpp*(j)*w)+  (bpp*(i-1))]
+              g = temp[offset+(bpp*(j+1)*w)+(bpp*(i+1))]
+              h = temp[offset+(bpp*(j+1)*w)+(bpp*(i  ))]
+              l = temp[offset+(bpp*(j+1)*w)+(bpp*(i-1))]
+              r = Math.min(a,b,c,d,e,f,g,h,l)
+              out[offset+(bpp*j*w)+(bpp*i)] = r
+        if( iterations > 1 )
+          for m in [0..temp.length]
+            temp[m]=out[m]
+      return @cropBorderCopy(out,border)
+      
+  edges:()=>
+    # so this is just the sobel magnitude. if we were really
+    # cool we would do it in floating point and scale it to
+    # the maximum. 
+    ximg = @sobelX()
+    yimg = @sobelY()
+    out = @getArray()
+    xv = ximg.getArray()
+    yv = yimg.getArray()
+    for i in [0..xv.data.length]
+      d = Math.sqrt((xv.data[i]*xv.data[i])+(yv.data[i]*yv.data[i]))
+      out.data[i] = @clamp(d) # we reall should scale versus clamp
+    return new Image(out)
+     
+  sobelY:(grayscale=false)=>
+    kernel = [[-1.0,0.0,1.0],[-2.0,0.0,2.0],[-1.0,0.0,1.0]]
+    return @kernel3x3(kernel,grayscale)
+
+  sobelX:(grayscale=false)=>
+    kernel = [[-1.0,-2.0,-1.0],[0.0,0.0,0.0],[1.0,2.0,1.0]]
+    return @kernel3x3(kernel,grayscale)
     
+  kernel3x3:(kernel,grayscale)=>
+    border = 1
+    w = @width+(2*border)
+    h = @height+(2*border) 
+    istart = border
+    istop = border+@width-1
+    jstart = border
+    jstop = border+@height-1
+
+    if( grayscale )
+      out = @cloneGrayWithBorder(border)
+      temp = @cloneGrayWithBorder(border)
+      #istart = istart + 1  
+      for j in [jstart..jstop] #Y
+        for i in [istart..istop] #X
+          vals = []
+          vals.push(temp[((j-1)*w)+((i+1))]*kernel[0][0])
+          vals.push(temp[((j-1)*w)+((i  ))]*kernel[0][1])
+          vals.push(temp[((j-1)*w)+((i-1))]*kernel[0][2])
+          vals.push(temp[((j)*w)+  ((i+1))]*kernel[1][0])
+          vals.push(temp[((j)*w)+  ((i  ))]*kernel[1][1])
+          vals.push(temp[((j)*w)+  ((i-1))]*kernel[1][1])
+          vals.push(temp[((j+1)*w)+((i+1))]*kernel[2][0])
+          vals.push(temp[((j+1)*w)+((i  ))]*kernel[2][1])
+          vals.push(temp[((j+1)*w)+((i-1))]*kernel[2][2])
+          acc = 0
+          for v in vals
+            acc += v          
+          out[(j*w)+(i)] = @clamp(Math.abs(acc))
+      return  @cropBorderCopyGray(out,border)
+    else
+      out = @cloneWithBorder(border)
+      temp = @cloneWithBorder(border)
+      bpp = 4
+      for j in [jstart..jstop] #Y
+        for i in [istart..istop] #X
+          for offset in [0..2]
+            vals = []
+            vals.push(temp[offset+(bpp*(j-1)*w)+(bpp*(i+1))]*kernel[0][0])
+            vals.push(temp[offset+(bpp*(j-1)*w)+(bpp*(i  ))]*kernel[0][1])
+            vals.push(temp[offset+(bpp*(j-1)*w)+(bpp*(i-1))]*kernel[0][2])
+            vals.push(temp[offset+(bpp*(j)*w)+  (bpp*(i+1))]*kernel[1][0])
+            vals.push(temp[offset+(bpp*(j)*w)+  (bpp*(i  ))]*kernel[1][1])
+            vals.push(temp[offset+(bpp*(j)*w)+  (bpp*(i-1))]*kernel[1][2])
+            vals.push(temp[offset+(bpp*(j+1)*w)+(bpp*(i+1))]*kernel[2][0])
+            vals.push(temp[offset+(bpp*(j+1)*w)+(bpp*(i  ))]*kernel[2][1])
+            vals.push(temp[offset+(bpp*(j+1)*w)+(bpp*(i-1))]*kernel[2][2])
+            acc = 0
+            for v in vals
+              acc += v          
+            out[offset+(bpp*j*w)+(bpp*i)] = @clamp(Math.abs(acc))
+      return @cropBorderCopy(out,border)
+
+              
+  clamp:(x,max=255,min=0) =>
+    return Math.max(min, Math.min(max, x))    
+
   cloneWithBorder:(borderSz) =>
     #Add a border to the image for convoltuions etc
     # this should be private
@@ -716,7 +610,63 @@ module.exports = class Image extends Model
         i = i + (2*rgbBorderSz)
         rowStop = rowStop+update
     return temp
-    
+
+  cloneGrayWithBorder:(borderSz) =>
+    #Add a border to the image for convoltuions etc
+    # this should be private
+    bpp = 4
+    oldSz = @width*@height*bpp
+    rgbBorderSz = bpp*borderSz
+    top = borderSz*(@width+(borderSz*2))
+    bottom = borderSz*(@width+(borderSz*2))
+    sides = 2*borderSz*@height
+    newSize = oldSz+top+bottom+sides
+    temp = new Uint8Array(newSize)
+    idx = 0
+    start = top
+    stop = top+sides+oldSz
+    old = @getArray()
+    rowStop = start+(@width)
+    update = (@width)+(2*borderSz)
+    i = start
+    while i < stop
+      temp[++i] = (old.data[idx] + old.data[idx+1] + old.data[idx+2]) / 3
+      idx += 4
+      if i == rowStop 
+        i = i + (2*borderSz)
+        rowStop = rowStop+update
+    return temp
+
+  cropBorderCopyGray:(img,borderSz) =>
+    # take a border image, crop out the border
+    # and return the image
+    # this should be a private function.
+    bpp = 4
+    oldSz = @width*@height*bpp
+    rgbBorderSz = bpp*borderSz
+    top = borderSz*((@width)+(borderSz*2))
+    bottom = borderSz*(@width+(borderSz*2))
+    sides = 2*borderSz*@height
+    newSize = oldSz+top+bottom+sides
+
+    start = top+1
+    stop = top+sides+oldSz
+    output = @getArray()
+    rowStop = start+(@width)
+    update = (@width)+(2*borderSz)
+    i = start
+    idx = 0
+    while i < stop
+      output.data[idx++] = img[i]
+      output.data[idx++] = img[i]
+      output.data[idx++] = img[i]
+      output.data[idx++] = 255
+      i = i + 1
+      if i >= rowStop 
+        i = i + (2*borderSz)
+        rowStop = rowStop+update
+    return new Image(output)
+        
   cropBorderCopy:(img,borderSz) =>
     # take a border image, crop out the border
     # and return the image
@@ -769,4 +719,92 @@ module.exports = class Image extends Model
       b = CV.grayscale(b,b)
       b = CV.gaussianBlur(b,b,b,kernel_sz)
       return @mergeCVGray(r,g,b)
-  
+
+  crop:(x,y,w,h)=>
+    # we'll try and do what the user wants, not what they say
+    if( x < 0 )
+      alert("Crop: your crop x position is negative.")
+      w = w+x
+      x = 0
+    if( y < 0 )
+      alert("Crop: your crop y position is negative.")
+      h = h+y
+      y = 0
+    if( x+w > @width )
+      alert("Crop: your crop width exceeds the image dimensions.")
+      w = @width-x
+    if( y+h > @height )
+      alert("Crop: your crop height exceeds the image dimensions.")
+      h = @height-y
+    return new Image( @ctx.getImageData(x,y,w,h) )
+
+  blit:(img,x=0,y=0,alpha=255,mask=undefined) =>
+    retVal = undefined
+    if( x+img.width >= @width or y+img.height >= @height )
+      alert("blit - your image is too big to blit directly - crop it down please.")
+    if( x < 0 or y < 0 )
+      alert("blit - can't blit image at a negative position.")      
+    bpp = 4
+    if( alpha >= 255 and !mask)
+      retVal = new Image(@ctx.getImageData(0,0,@width,@height))
+      retVal.ctx.putImageData(img.getArray(),x,y)
+    else
+      start = ((y*@width)+x)*bpp
+      stop = (((y+img.height)*@width)-(@width-x-img.width))*bpp
+      rowStop = start + ((img.width)*bpp) # when to stop the row
+      rowSkip = ((@width-x-img.width)+x)*bpp # where to start the new row
+      rowUpdate = img.width*bpp
+      src = img.getArray()
+      i = 0
+      idx = start
+      dst = @getArray()
+      if( alpha < 255 and !mask)
+      # so canvas alpha channels are totally for stacking
+      # and completely useless for this kind of stuff
+        a = alpha / 255.0
+        b = (255-alpha) / 255.0
+        while( idx < stop )
+          dst.data[idx] = b*dst.data[idx]+a*src.data[i]
+          dst.data[idx+1] = b*dst.data[idx+1]+a*src.data[i+1]
+          dst.data[idx+2] = b*dst.data[idx+2]+a*src.data[i+2]
+          if(idx>=rowStop)
+            idx+=rowSkip
+            rowStop=rowStop+rowSkip+rowUpdate
+          else
+            idx += 4
+            i += 4        
+        retVal = new Image(dst)
+      else if( alpha >= 255 and mask)
+        maskArray = mask.getArray()
+        while( idx < stop )
+          if( maskArray.data[i] > 0 )
+            dst.data[idx] = src.data[i]
+            dst.data[idx+1] = src.data[i+1]
+            dst.data[idx+2] = src.data[i+2]
+          if(idx>=rowStop)
+            idx+=rowSkip
+            rowStop=rowStop+rowSkip+rowUpdate
+          else
+            idx += 4
+            i += 4        
+        retVal = new Image(dst)
+      else if( alpha < 255 and mask )
+        a = alpha / 255.0
+        b = (255-alpha) / 255.0
+        maskArray = mask.getArray()
+        while( idx < stop )
+          if(maskArray.data[i])
+            dst.data[idx] = b*dst.data[idx]+a*src.data[i]
+            dst.data[idx+1] = b*dst.data[idx+1]+a*src.data[i+1]
+            dst.data[idx+2] = b*dst.data[idx+2]+a*src.data[i+2]
+          if(idx>=rowStop)
+            idx+=rowSkip
+            rowStop=rowStop+rowSkip+rowUpdate
+          else
+            idx += 4
+            i += 4        
+        retVal = new Image(dst)
+     return retVal
+    
+
+
