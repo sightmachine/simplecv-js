@@ -719,4 +719,92 @@ module.exports = class Image extends Model
       b = CV.grayscale(b,b)
       b = CV.gaussianBlur(b,b,b,kernel_sz)
       return @mergeCVGray(r,g,b)
-  
+
+  crop:(x,y,w,h)=>
+    # we'll try and do what the user wants, not what they say
+    if( x < 0 )
+      alert("Crop: your crop x position is negative.")
+      w = w+x
+      x = 0
+    if( y < 0 )
+      alert("Crop: your crop y position is negative.")
+      h = h+y
+      y = 0
+    if( x+w > @width )
+      alert("Crop: your crop width exceeds the image dimensions.")
+      w = @width-x
+    if( y+h > @height )
+      alert("Crop: your crop height exceeds the image dimensions.")
+      h = @height-y
+    return new Image( @ctx.getImageData(x,y,w,h) )
+
+  blit:(img,x=0,y=0,alpha=255,mask=undefined) =>
+    retVal = undefined
+    if( x+img.width >= @width or y+img.height >= @height )
+      alert("blit - your image is too big to blit directly - crop it down please.")
+    if( x < 0 or y < 0 )
+      alert("blit - can't blit image at a negative position.")      
+    bpp = 4
+    if( alpha >= 255 and !mask)
+      retVal = new Image(@ctx.getImageData(0,0,@width,@height))
+      retVal.ctx.putImageData(img.getArray(),x,y)
+    else
+      start = ((y*@width)+x)*bpp
+      stop = (((y+img.height)*@width)-(@width-x-img.width))*bpp
+      rowStop = start + ((img.width)*bpp) # when to stop the row
+      rowSkip = ((@width-x-img.width)+x)*bpp # where to start the new row
+      rowUpdate = img.width*bpp
+      src = img.getArray()
+      i = 0
+      idx = start
+      dst = @getArray()
+      if( alpha < 255 and !mask)
+      # so canvas alpha channels are totally for stacking
+      # and completely useless for this kind of stuff
+        a = alpha / 255.0
+        b = (255-alpha) / 255.0
+        while( idx < stop )
+          dst.data[idx] = b*dst.data[idx]+a*src.data[i]
+          dst.data[idx+1] = b*dst.data[idx+1]+a*src.data[i+1]
+          dst.data[idx+2] = b*dst.data[idx+2]+a*src.data[i+2]
+          if(idx>=rowStop)
+            idx+=rowSkip
+            rowStop=rowStop+rowSkip+rowUpdate
+          else
+            idx += 4
+            i += 4        
+        retVal = new Image(dst)
+      else if( alpha >= 255 and mask)
+        maskArray = mask.getArray()
+        while( idx < stop )
+          if( maskArray.data[i] > 0 )
+            dst.data[idx] = src.data[i]
+            dst.data[idx+1] = src.data[i+1]
+            dst.data[idx+2] = src.data[i+2]
+          if(idx>=rowStop)
+            idx+=rowSkip
+            rowStop=rowStop+rowSkip+rowUpdate
+          else
+            idx += 4
+            i += 4        
+        retVal = new Image(dst)
+      else if( alpha < 255 and mask )
+        a = alpha / 255.0
+        b = (255-alpha) / 255.0
+        maskArray = mask.getArray()
+        while( idx < stop )
+          if(maskArray.data[i])
+            dst.data[idx] = b*dst.data[idx]+a*src.data[i]
+            dst.data[idx+1] = b*dst.data[idx+1]+a*src.data[i+1]
+            dst.data[idx+2] = b*dst.data[idx+2]+a*src.data[i+2]
+          if(idx>=rowStop)
+            idx+=rowSkip
+            rowStop=rowStop+rowSkip+rowUpdate
+          else
+            idx += 4
+            i += 4        
+        retVal = new Image(dst)
+     return retVal
+    
+
+
