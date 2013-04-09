@@ -117,6 +117,42 @@ module.exports = class Image extends Model
   getArray:() =>
     matrix = @ctx.getImageData(0,0,@width,@height)
     return matrix
+
+  # Returns coordinates and value of the pixel with the highest
+  # brightness following the format [x_pos, y_pos, value]
+  getBrightestPixel:()=>
+    points = @getGrayMatrix()
+    x_pos = 0; y_pos = 0; brightness = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        if points[i][j][0] > brightness
+          x_pos = i
+          y_pos = j
+          brightness = points[i][j][0]
+    return [x_pos, y_pos, brightness]
+
+  # Returns coordinates and value of the pixel with the smallest
+  # brightness following the format [x_pos, y_pos, value]
+  getDarkestPixel:()=>
+    points = @getGrayMatrix()
+    x_pos = 0; y_pos = 0; brightness = points[0][0][0]
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        if points[i][j][0] < brightness
+          x_pos = i
+          y_pos = j
+          brightness = points[i][j][0]
+    return [x_pos, y_pos, brightness]
+
+  # Returns the average brightness of the image.
+  getAverageBrightness:()=>
+    points = @getGrayMatrix()
+    brightness_sum = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        brightness_sum += points[i][j][0]
+    return brightness_sum / (@width * @height)
+
   
   # Simple image scale. Uses canvas to get this done
   # quickly. Returns a new image.
@@ -805,6 +841,4 @@ module.exports = class Image extends Model
             i += 4        
         retVal = new Image(dst)
      return retVal
-    
-
 
