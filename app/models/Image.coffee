@@ -299,7 +299,7 @@ module.exports = class Image extends Model
     matrix = @getArray()
     if threshold is -1 then threshold = CV.otsu(matrix);
     return new Image(CV.threshold(matrix, matrix, threshold))
-  
+
   # Simple function to invert the pixels in an image.
   invert:() =>
     matrix = @getArray(); i = 0;
@@ -539,6 +539,16 @@ module.exports = class Image extends Model
           for m in [0..temp.length]
             temp[m]=out[m]
       return @cropBorderCopy(out,border)
+
+  #Does an erosion of the dilation of the image (see: http://en.wikipedia.org/wiki/Closing_(morphology))
+  closing:(iterations=1,grayscale=false)=>
+    dilation = @dilate(iterations, grayscale)
+    return dilation.erode(iterations, grayscale)
+
+  #Does an dilation of the erosion of the image (see: http://en.wikipedia.org/wiki/Opening_(morphology))
+  opening:(iterations=1,grayscale=false)=>
+    erosion = @erode(iterations, grayscale)
+    return erosion.dilate(iterations, grayscale)
       
   edges:()=>
     # so this is just the sobel magnitude. if we were really
