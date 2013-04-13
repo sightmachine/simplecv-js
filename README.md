@@ -8,6 +8,7 @@ Currently a Skeleton
 
 [Coffee Script](http://coffeescript.org/)
 [Node.js](http://nodejs.org) ~ v0.6.10
+[Node Package Manager](https://npmjs.org/)
 
 ## Quick Start Guide
 
@@ -16,7 +17,8 @@ _Note that this quickstart guide is tested and works for Ubuntu 12.04 LTS_
 * Install [brunch](http://brunch.io/).
 * Install [coffe-script-brunch](https://github.com/brunch/coffee-script-brunch) which adds support for Coffee Script.
 * Install a [coffee script](http://coffeescript.org/) build environment.
-* _Optional_ Install [SimpleCV](https://github.com/sightmachine/simplecv#installation) and its dependencies. 
+* _Optional_ Install [SimpleCV](https://github.com/ingenuitas/simplecv#installation) and its dependencies.
+* Run `npm install` to install missing dependencies
 * Add the following command to your .bashrc file and source the file:
   alias http "python -m SimpleHTTPServer"
 * Run the following commands in the shell
