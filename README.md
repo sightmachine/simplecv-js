@@ -4,6 +4,11 @@ Currently a Skeleton
 
 [**CHECK OUT THE LIVE DEMO (Chrome only!)**](http://demo.simplecv.org/)
 
+## Requirements
+
+[Coffee Script](http://coffeescript.org/)
+[Node.js](http://nodejs.org) ~ v0.6.10
+
 ## Quick Start Guide
 
 _Note that this quickstart guide is tested and works for Ubuntu 12.04 LTS_
