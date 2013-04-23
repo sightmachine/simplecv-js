@@ -1,4 +1,3 @@
-
 Color = require './Color'
 Model = require './model'
 Display = require './Display'
@@ -593,7 +592,7 @@ module.exports = class Image extends Model
           vals.push(temp[((j-1)*w)+((i-1))]*kernel[0][2])
           vals.push(temp[((j)*w)+  ((i+1))]*kernel[1][0])
           vals.push(temp[((j)*w)+  ((i  ))]*kernel[1][1])
-          vals.push(temp[((j)*w)+  ((i-1))]*kernel[1][1])
+          vals.push(temp[((j)*w)+  ((i-1))]*kernel[1][2])
           vals.push(temp[((j+1)*w)+((i+1))]*kernel[2][0])
           vals.push(temp[((j+1)*w)+((i  ))]*kernel[2][1])
           vals.push(temp[((j+1)*w)+((i-1))]*kernel[2][2])
