@@ -517,7 +517,20 @@ module.exports = class Image extends Model
       d = Math.sqrt((xv.data[i]*xv.data[i])+(yv.data[i]*yv.data[i]))
       out.data[i] = @clamp(d) # we reall should scale versus clamp
     return new Image(out)
-     
+
+  # Returns an object with both magnitudes and directions of its edges.
+  # More info at http://en.wikipedia.org/wiki/Sobel_operator#Formulation
+  getEdgesInfo:()=>
+    x = @sobelX().getArray()
+    y = @sobelY().getArray()
+    result = {}
+    result.magnitudes = []
+    result.directions = []
+    for i in [0..x.data.length]
+      result.magnitudes.push(Math.sqrt(Math.pow(x.data[i],2)+Math.pow(y.data[i],2)))
+      result.directions.push(Math.atan(y.data[i]/x.data[i]))
+    return result
+
   sobelY:(grayscale=false)=>
     kernel = [[-1.0,0.0,1.0],[-2.0,0.0,2.0],[-1.0,0.0,1.0]]
     return @kernel3x3(kernel,grayscale)
@@ -805,6 +818,5 @@ module.exports = class Image extends Model
             i += 4        
         retVal = new Image(dst)
      return retVal
-    
-
-
+     
+     
