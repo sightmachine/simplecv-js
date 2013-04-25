@@ -805,6 +805,22 @@ module.exports = class Image extends Model
             i += 4        
         retVal = new Image(dst)
      return retVal
-    
 
+    meanFilter:()=>
+        mean_window = [[1/9.0,1/9.0,1/9.0],[1/9.0,1/9.0,1/9.0],[1/9.0,1/9.0,1/9.0]]
+        return @kernel3x3(mean_window)
 
+    gaussianFilter:(sigma)=>
+        return @kernel3x3(@gaussianKernel(sigma, 3))
+
+    gaussianKernel:(sigma, size)->
+      result = []
+      increment = Math.floor(size/2);
+      left_part = (1/(Math.sqrt(2*Math.PI*sigma)))
+      for i in [-increment..increment]
+        row = []
+        for j in [-increment..increment]
+          right_part = Math.exp(-((i*i+j*j)/(2*sigma)))
+          row.push(left_part*right_part)
+        result.push(row)  
+      return result
