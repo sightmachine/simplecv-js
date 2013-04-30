@@ -849,7 +849,7 @@ module.exports = class Image extends Model
             idx += 4
             i += 4        
         retVal = new Image(dst)
-     return retVal
+    return retVal
   canny:(highThreshold = 100, lowThreshold = 50, kernel_size = 5)=>
     ######################################################################################################################################
     #The Canny edge detector is an edge detection operator that uses a multi-stage algorithm to detect a wide range of edges in images. 
