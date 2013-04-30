@@ -11,6 +11,7 @@ module.exports = class HomeView extends View
   demoOne: null
   demoTwo: null
   demoThree: null
+  demoFour: null
   editors: null
   liveEditor: null
   delay: null
@@ -43,6 +44,7 @@ module.exports = class HomeView extends View
         @demoOne = $("#demoOne .preview")
         @demoTwo = $("#demoTwo .preview")
         @demoThree = $("#demoThree .preview")
+        @demoFour = $("#demoFour .preview")
         @highlight()
         @kittyDemo()
         @cameraDemo()
@@ -102,20 +104,23 @@ module.exports = class HomeView extends View
       @editors[_i] = editor
   
   # Displays a picture of a cat, the grey
-  # version of it, and the binarized
-  # version of it.
+  # version of it, the binarized
+  # version of it and the blurred version of it.
   kittyDemo:() =>
     one = $('<div class="cvImage"></div>').appendTo(@demoOne)
     two = $('<div class="cvImage"></div>').appendTo(@demoTwo)
     three = $('<div class="cvImage"></div>').appendTo(@demoThree)
+    four = $('<div class="cvImage"></div>').appendTo(@demoFour)
     kitty = $("<img/>").attr("src", "images/kitty.jpg").get(0)
     kitty.onload = =>
       k = new CVImage(kitty)
       k1 = k.grayscale()
       k2 = k1.binarize()
+      k3 = k.blur()
       k.show(one)
       k1.show(two)
       k2.show(three)
+      k3.show(four)
     return
 
   # Displays a camera, 
@@ -126,6 +131,7 @@ module.exports = class HomeView extends View
       one = $('<div class="cvImage"></div>'); @demoOne.html(one)
       two = $('<div class="cvImage"></div>'); @demoTwo.html(two)
       three = $('<div class="cvImage"></div>'); @demoThree.html(three)
+      four = $('<div class="cvImage"></div>'); @demoFour.html(four)
       
       $("button.run").removeClass("inactive")
       
@@ -157,7 +163,15 @@ me = me.hueDistance(357)
 me = me.invert()
 me = me.binarize(241)
 me.show(three)
-""")      
+""") 
+
+      @editors[3].setValue("""
+me = c.getImage()
+me = me.scale(.5)
+me = me.saturate()
+me = me.blur()
+""")
+     
       
       oldSetInterval(=>
         # Scaled Camera Shot
@@ -175,6 +189,10 @@ me.show(three)
         e = e.invert()
         e = e.binarize(241)
         e.show(three)
+
+	# Blur Camera
+        f = a.blur()
+        f.show(four)
       , 1000/60)
     )
     return
