@@ -850,4 +850,161 @@ module.exports = class Image extends Model
             i += 4        
         retVal = new Image(dst)
      return retVal
+  canny:(highThreshold = 100, lowThreshold = 50, kernel_size = 5)=>
+    ######################################################################################################################################
+    #The Canny edge detector is an edge detection operator that uses a multi-stage algorithm to detect a wide range of edges in images. 
+    #The Algorithm is as follows  
+    #1. Smooth the image with gaussian blur  
+    #2. Obtain gradients in x and y directions by convoluting with sobel kernels   
+    #3. Obtain edgestrengths  G = ((G(x)^2+G(y)^2))^1/2  and edge directions  theta = arctan(G(y)/G(x))
+    #4. After the above step we do something called non maximum suppression . i.e looking for peaks by comparing the edge strengths
+    #   of  the corresponding pixels in the 8-pixel neighbourhood. 
+    #5. Now we have possible edge points and we also have false edge points that we dont really need. so as to obtain true edges
+    #   we do double thresholding. we choose two threshold values highThreshold and lowThreshold. the peaks which are true and  
+    #   have corresponding edge strengths greater than highThreshold . they are marked true in the final edge matrix. the peaks which have 
+    #   edge strengths lower than lowThreshold are marked false and they are not included in the final edge matrix. 
+    #6. The remaining peaks whose edge strengths are in betweeen highThreshold and lowThreshold we check the 8-pixel neighbourhood and if it has 
+    #   a true edge point in that area then we make it true. this is also known as edge linking.
+    #7. Finally we printout black pixel where final edge points dont exist (or false) and white pixel if they are true
+    #
+    #The arguments to this method are given below:
+    #
+    # highThreshold = the higher threshold value for high thresholding
+    #
+    # lowThreshold  = the low threshold value for low thresholding
+    #
+    # kernel_size   = the specified size for gaussian smoothing kernel
+    ######################################################################################################################################
+
+    blurIm = @blur(kernel_size,false)#smoothing the image to reduce noise
+    gradientX = blurIm.getGrayArray()#initializing gradient matrices for both x and y directions and temp matrices for convolution 
+    tempX = blurIm.getGrayArray()
+    gradientY = blurIm.getGrayArray()
+    tempY = blurIm.getGrayArray()
+    kernelX = [[-1.0,0.0,1.0],[-2.0,0.0,2.0],[-1.0,0.0,1.0]]#the sobel kernels
+    kernelY = [[1.0,2.0,1.0],[0.0,0.0,0.0],[-1.0,-2.0,-1.0]]
+    for j in [1..@width-2] # convolution to obtain the gradients
+      for i in [1..@width-2] #
+        valsX = []
+        valsX.push(tempX[((j-1)*(@width))+((i+1))]*kernelX[2][0])
+        valsX.push(tempX[((j-1)*(@width))+((i  ))]*kernelX[1][0])
+        valsX.push(tempX[((j-1)*(@width))+((i-1))]*kernelX[0][0])
+        valsX.push(tempX[((j)*(@width ))+  ((i+1))]*kernelX[2][1])
+        valsX.push(tempX[((j)*(@width ))+  ((i  ))]*kernelX[1][1])
+        valsX.push(tempX[((j)*(@width ))+  ((i-1))]*kernelX[0][1])
+        valsX.push(tempX[((j+1)*(@width))+((i+1))]*kernelX[2][2])
+        valsX.push(tempX[((j+1)*(@width))+((i  ))]*kernelX[1][2])
+        valsX.push(tempX[((j+1)*(@width))+((i-1))]*kernelX[0][2])
+        accX = 0
+        for v in valsX
+          accX += v          
+        gradientX[(j*(@width))+(i)] = accX
+        
+        valsY = []
+        valsY.push(tempY[((j-1)*(@width))+((i+1))]*kernelY[2][0])
+        valsY.push(tempY[((j-1)*(@width))+((i  ))]*kernelY[1][0])
+        valsY.push(tempY[((j-1)*(@width))+((i-1))]*kernelY[0][0])
+        valsY.push(tempY[((j)*(@width ))+  ((i+1))]*kernelY[2][1])
+        valsY.push(tempY[((j)*(@width ))+  ((i  ))]*kernelY[1][1])
+        valsY.push(tempY[((j)*(@width ))+  ((i-1))]*kernelY[0][1])
+        valsY.push(tempY[((j+1)*(@width ))+((i+1))]*kernelY[2][2])
+        valsY.push(tempY[((j+1)*(@width ))+((i  ))]*kernelY[1][2])
+        valsY.push(tempY[((j+1)*(@width ))+((i-1))]*kernelY[0][2])
+        accY = 0
+        for v in valsY
+          accY += v          
+        gradientY[(j*(@width))+(i)] = accY
+    edge_strength = []# initializing local matrices for use in the algorithm , edge_strength for calculationg edgestrengths
+    peaks = []# peaks for calculating the local maxima(possible edge points)
+    angle = []# angle for calculating the edge directions
+    x = []    #temporary arrays
+    inter = []
+    inter1 = []
+    for i in [0..@height-1]#pushing zeroes into peaks
+      for j in [0..@width-1]
+        x.push 0
+      peaks.push x
+      x = []
+    out = @getArray()#the original image characteistic array used for output
+    b = 0
+    for i in [0..@height-1]# calculation of edge strengths and pushing them into a temporary array and then pushing temp to edge_strength
+      for j in [0..@width-1]# calculation of edge directions and pushing them into a temp array and then pushing temp to angle 
+        d = Math.sqrt((gradientX[b]*gradientX[b] + gradientY[b]*gradientY[b]))
+        s = Math.round(d)
+        inter.push s
+        if (gradientX[b] == 0)
+          if (gradientY[b] >= 0)
+            inter1.push 90
+          else
+            inter1.push -90
+        else
+          k = Math.atan((gradientY[b])/(gradientX[b]))*57.295
+          inter1.push k
+        b+= 1
+      edge_strength.push inter
+      angle.push inter1
+      inter = []
+      inter1 = []
+    for i in [1..@height-2]# non maximum suppression , we basically look for the pixels in the edge direction and compare with them 
+      for j in [1..@width-2]#to obtain peaks
+        if(angle[i][j] < 22.5 and angle[i][j] >= -22.5)
+          if(edge_strength[i][j] > Math.max(edge_strength[i][j-1],edge_strength[i][j+1]))
+            peaks[i][j] = 1
+          else
+            peaks[i][j] = 0
+        if(angle[i][j] < 67.5 and angle[i][j] >= 22.5)
+          if(edge_strength[i][j] > Math.max(edge_strength[i+1][j-1],edge_strength[i-1][j+1]))
+            peaks[i][j] = 1
+          else
+            peaks[i][j] = 0
+        if(angle[i][j] < -22.5 and angle[i][j] >= -67.5)
+          if(edge_strength[i][j] > Math.max(edge_strength[i-1][j-1],edge_strength[i+1][j+1]))
+            peaks[i][j] = 1
+          else
+            peaks[i][j] = 0
+        else
+          if(edge_strength[i][j] > Math.max(edge_strength[i-1][j],edge_strength[i+1][j]))
+            peaks[i][j] = 1
+          else
+            peaks[i][j] = 0
+    y = []
+    final = [] #final array , used for final peaks after hysterisis thresholding
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        y.push 0
+      final.push y
+      y = []
+    for i in [1..@height-2]# high thresholding , marking all existing peaks in final false if they are lower than highThreshold 
+      for j in [1..@width-2]# and true if they are higher than it
+        if(peaks[i][j] == 1 and edge_strength[i][j] > highThreshold)
+          peaks[i][j] = 0
+          final[i][j] = 1
+        if(peaks[i][j] == 0 and edge_strength[i][j] < lowThreshold)
+          peaks[i][j] = 0
+          final[i][j] = 0
+    flag = 1
+    while(flag == 1)# a simple way of low thresholding i.e for the values less than high threshold and greater than low threshold 
+      flag = 0      # also known as edge linking
+      for i in [1..@height-2]
+        for j in [1..@width-2]
+          if (peaks[i][j] == 1)
+            for p in [-1..1]
+              for q in [-1..1]
+                if(final[i+p][j+q] == 1)
+                  final[i][j] = 1
+                  peaks[i][j] = 0
+                  flag = 1
+    a = 0
+    for i in [0..@height-1]# if in final , it is true print white pixel there 
+      for j in [0..@width-1]# and if its not true print black pixel
+        if (final[i][j] == 1)
+          out.data[a] = 255
+          out.data[a+1] = 255
+          out.data[a+2] = 255
+        else
+          out.data[a] = 0
+          out.data[a+1] = 0
+          out.data[a+2] = 0
+        a+= 4
+    return new Image(out)     
 
