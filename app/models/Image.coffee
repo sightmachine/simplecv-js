@@ -269,14 +269,14 @@ module.exports = class Image extends Model
     return new Image(matrix)
 
   # Return a gray matrix suitable for grayscale cv operations.
-  # getGrayArray:() =>
-  #   matrix = @getArray();
-  #   i = 0;
-  #   while i < matrix.data.length
-  #     avg = (matrix.data[i] + matrix.data[i+1] + matrix.data[i+2]) / 3
-  #     matrix.data[i] = matrix.data[i+1] = matrix.data[i+2] = avg
-  #     i += 4
-  #   return matrix
+  getGrayArray:() =>
+    matrix = @getArray(); out = []
+    i = 0;
+    while i < matrix.data.length
+      avg = (matrix.data[i] + matrix.data[i+1] + matrix.data[i+2]) / 3
+      out.push avg
+      i += 4
+    return out
        
   getGrayMatrix:() =>
     result = []; x = [];
