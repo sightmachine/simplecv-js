@@ -873,7 +873,7 @@ module.exports = class Image extends Model
     #
     # lowThreshold  = the low threshold value for low thresholding
     #
-    # kernel_size   = the specified size for gaussian smoothing kernel
+    # kernel_size   = the specified size for gaussian smoothing kernel , it must be odd.
     ######################################################################################################################################
 
     blurIm = @blur(kernel_size,false)#smoothing the image to reduce noise
