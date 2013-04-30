@@ -10,7 +10,7 @@ _Note that this quickstart guide is tested and works for Ubuntu 12.4 LTS_
 
 * Install [brunch](https://github.com/brunch/coffee-script-brunch).
 * Install a [coffee script](http://coffeescript.org/) build environment.
-* _Optional_ Install [SimpleCV](https://github.com/ingenuitas/simplecv#installation) and its dependencies. 
+* _Optional_ Install [SimpleCV](https://github.com/sightmachine/simplecv#installation) and its dependencies. 
 * Add the following command to your .bashrc file and source the file:
   alias http "python -m SimpleHTTPServer"
 * Run the following commands in the shell
