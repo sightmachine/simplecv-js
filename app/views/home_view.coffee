@@ -169,6 +169,7 @@ me.show(three)
 me = c.getImage()
 me = me.scale(.5)
 me = me.saturate()
+me = me.grayscale()
 me = me.blur()
 """)
      
