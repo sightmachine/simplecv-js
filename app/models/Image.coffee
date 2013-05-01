@@ -78,7 +78,7 @@ module.exports = class Image extends Model
   # Deletes a drawing layer from the image. Will
   # shift the indices of subsequent drawing layers
   # if they exist.
-  removeDrawingLayer:(layer=@layers.lenth-1) =>
+  removeDrawingLayer:(layer=@layers.length-1) =>
     delete @layers[layer]
     @layers.splice(layer, 1)
    
@@ -394,9 +394,9 @@ module.exports = class Image extends Model
 
   merge:(r,g,b) =>
     # Merge rgb images of the channels into one image
-    if( r.width is not @width and r.height is not @height and \
-        g.width is not @width and g.height is not @height and \
-        b.width is not @width and b.height is not @height )
+    if( r.width isnt @width or r.height isnt @height or \
+        g.width isnt @width or g.height isnt @height or \
+        b.width isnt @width or b.height isnt @height )
       throw 'Sorry - I can\'t merge images of different sizes' 
 
     retVal = @getArray()
