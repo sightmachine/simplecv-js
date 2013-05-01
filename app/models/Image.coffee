@@ -628,9 +628,8 @@ module.exports = class Image extends Model
   clamp:(x,max=255,min=0) =>
     return Math.max(min, Math.min(max, x))    
 
-  cloneWithBorder:(borderSz) =>
-    #Add a border to the image for convoltuions etc
-    # this should be private
+  # Adds a border to the image for convolutions, etc
+  cloneWithBorder:(borderSz) ->
     bpp = 4 
     oldSz = @width*@height*bpp
     rgbBorderSz = bpp*borderSz
@@ -656,9 +655,8 @@ module.exports = class Image extends Model
         rowStop = rowStop+update
     return temp
 
-  cloneGrayWithBorder:(borderSz) =>
-    #Add a border to the image for convoltuions etc
-    # this should be private
+  # Adds a border to the image for convolutions, etc (grayscale)
+  cloneGrayWithBorder:(borderSz) ->
     bpp = 4
     oldSz = @width*@height*bpp
     rgbBorderSz = bpp*borderSz
@@ -682,10 +680,8 @@ module.exports = class Image extends Model
         rowStop = rowStop+update
     return temp
 
-  cropBorderCopyGray:(img,borderSz) =>
-    # take a border image, crop out the border
-    # and return the image
-    # this should be a private function.
+  # Takes a border image, crops out the border and returns the image (grayscale)
+  cropBorderCopyGray:(img,borderSz) ->
     bpp = 4
     oldSz = @width*@height*bpp
     rgbBorderSz = bpp*borderSz
@@ -711,11 +707,9 @@ module.exports = class Image extends Model
         i = i + (2*borderSz)
         rowStop = rowStop+update
     return new Image(output)
-        
+  
+  # Takes a border image, crops out the border and returns the image      
   cropBorderCopy:(img,borderSz) =>
-    # take a border image, crop out the border
-    # and return the image
-    # this should be a private function.
     bpp = 4
     oldSz = @height*@width*bpp
     rgbBorderSz = bpp*borderSz
