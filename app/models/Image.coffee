@@ -843,5 +843,51 @@ module.exports = class Image extends Model
             idx += 4
             i += 4        
         retVal = new Image(dst)
-     return retVal
+    return retVal
+  #quick emboss filter http://en.wikipedia.org/wiki/Image_embossing
+  emboss:()=>
+    out = @getArray(); r = []; g = []; b = []; x = []; p = []; q = [];
+    tempRed = []; tempGreen = []; tempBlue = [];
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        x.push 0
+      tempRed.push x
+      x = []
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        p.push 0
+      tempGreen.push p
+      p = []
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        q.push 0
+      tempBlue.push q
+      q = []
+    y = []; z = []; w = []; a = 0;
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        y.push out.data[a]
+        z.push out.data[a+1]
+        w.push out.data[a+2]
+        a+=4
+      r.push y
+      g.push z
+      b.push w
+      y = []
+      z = []
+      w = []
+    for i in [1..@height-2]
+      for j in [1..@width-2]
+        tempRed[i][j] = @clamp(r[i-1][j-1] + r[i-1][j] + r[i-1][j+1] - r[i+1][j-1] - r[i+1][j] - r[i+1][j+1] + 127)
+        tempGreen[i][j] = @clamp(g[i-1][j-1] + g[i-1][j] + g[i-1][j+1] - g[i+1][j-1] - g[i+1][j] - g[i+1][j+1] + 127)
+        tempBlue[i][j] = @clamp(b[i-1][j-1] + b[i-1][j] + b[i-1][j+1] - b[i+1][j-1] - b[i+1][j] - b[i+1][j+1] + 127)
+    f = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        out.data[f] = tempRed[i][j]
+        out.data[f+1] = tempGreen[i][j]
+        out.data[f+2] = tempBlue[i][j]
+        f+=4
+    return new Image(out)    
+    
 
