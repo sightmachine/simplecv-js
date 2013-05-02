@@ -843,5 +843,28 @@ module.exports = class Image extends Model
             idx += 4
             i += 4        
         retVal = new Image(dst)
-     return retVal
+    return retVal
+  #a gamma filter ,http://en.wikipedia.org/wiki/Gamma_correction
+  gamma:(gammanew = 2)=>
+    out = @getArray()
+    i = 0
+    gamma_LUT = @gammaLUT(gammanew)
+    while i < out.data.length
+      r = out.data[i]
+      g = out.data[i+1]
+      b = out.data[i+2]
+      out.data[i] = gamma_LUT[r]
+      out.data[i+1] = gamma_LUT[g]
+      out.data[i+2] = gamma_LUT[b]
+      i+=4
+    return new Image(out)
+    
+  #gamma look up table for increasing performance
+  gammaLUT:(gammatemp)=>
+    result = []
+    for i in [0..255]
+      b = i/255
+      k = Math.round(255*(Math.pow(b,gammatemp)))
+      result.push k
+    return result    
 
