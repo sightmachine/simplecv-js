@@ -78,7 +78,7 @@ module.exports = class Image extends Model
   # Deletes a drawing layer from the image. Will
   # shift the indices of subsequent drawing layers
   # if they exist.
-  removeDrawingLayer:(layer=@layers.lenth-1) =>
+  removeDrawingLayer:(layer=@layers.length-1) =>
     delete @layers[layer]
     @layers.splice(layer, 1)
    
@@ -394,9 +394,9 @@ module.exports = class Image extends Model
 
   merge:(r,g,b) =>
     # Merge rgb images of the channels into one image
-    if( r.width is not @width and r.height is not @height and \
-        g.width is not @width and g.height is not @height and \
-        b.width is not @width and b.height is not @height )
+    if( r.width isnt @width or r.height isnt @height or \
+        g.width isnt @width or g.height isnt @height or \
+        b.width isnt @width or b.height isnt @height )
       throw 'Sorry - I can\'t merge images of different sizes' 
 
     retVal = @getArray()
@@ -628,9 +628,8 @@ module.exports = class Image extends Model
   clamp:(x,max=255,min=0) =>
     return Math.max(min, Math.min(max, x))    
 
-  cloneWithBorder:(borderSz) =>
-    #Add a border to the image for convoltuions etc
-    # this should be private
+  # Adds a border to the image for convolutions, etc
+  cloneWithBorder:(borderSz) ->
     bpp = 4 
     oldSz = @width*@height*bpp
     rgbBorderSz = bpp*borderSz
@@ -656,9 +655,8 @@ module.exports = class Image extends Model
         rowStop = rowStop+update
     return temp
 
-  cloneGrayWithBorder:(borderSz) =>
-    #Add a border to the image for convoltuions etc
-    # this should be private
+  # Adds a border to the image for convolutions, etc (grayscale)
+  cloneGrayWithBorder:(borderSz) ->
     bpp = 4
     oldSz = @width*@height*bpp
     rgbBorderSz = bpp*borderSz
@@ -682,10 +680,8 @@ module.exports = class Image extends Model
         rowStop = rowStop+update
     return temp
 
-  cropBorderCopyGray:(img,borderSz) =>
-    # take a border image, crop out the border
-    # and return the image
-    # this should be a private function.
+  # Takes a border image, crops out the border and returns the image (grayscale)
+  cropBorderCopyGray:(img,borderSz) ->
     bpp = 4
     oldSz = @width*@height*bpp
     rgbBorderSz = bpp*borderSz
@@ -711,11 +707,9 @@ module.exports = class Image extends Model
         i = i + (2*borderSz)
         rowStop = rowStop+update
     return new Image(output)
-        
+  
+  # Takes a border image, crops out the border and returns the image      
   cropBorderCopy:(img,borderSz) =>
-    # take a border image, crop out the border
-    # and return the image
-    # this should be a private function.
     bpp = 4
     oldSz = @height*@width*bpp
     rgbBorderSz = bpp*borderSz
