@@ -843,5 +843,25 @@ module.exports = class Image extends Model
             idx += 4
             i += 4        
         retVal = new Image(dst)
-     return retVal
+    return retVal
+  # A sepia filter.
+  sepia:(sepiaIntensity = 30)=>
+    sepiaDepth = 20
+    out = @getArray()
+    i = 0
+    while i < out.data.length
+      r = out.data[i]
+      g = out.data[i+1]
+      b = out.data[i+2]
+      a = out.data[i+3]
+      avg = (r+g+b)/3
+      r = @clamp(avg + (sepiaDepth*2))
+      g = @clamp(avg + sepiaDepth)
+      b = @clamp(avg - sepiaIntensity)
+      out.data[i] = r
+      out.data[i+1] = g
+      out.data[i+2] = b      
+      i+=4
+    return new Image(out)    
+     
 
