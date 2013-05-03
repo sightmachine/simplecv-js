@@ -1039,6 +1039,49 @@ module.exports = class Image extends Model
     for i in [0..255]
       k = Math.floor Math.floor(i / numOfAreas) * numOfValues
       result.push k
-    return result    
+    return result
+  #a gamma filter ,http://en.wikipedia.org/wiki/Gamma_correction
+  gamma:(gammanew = 2)=>
+    out = @getArray()
+    i = 0
+    gamma_LUT = @gammaLUT(gammanew)
+    while i < out.data.length
+      r = out.data[i]
+      g = out.data[i+1]
+      b = out.data[i+2]
+      out.data[i] = gamma_LUT[r]
+      out.data[i+1] = gamma_LUT[g]
+      out.data[i+2] = gamma_LUT[b]
+      i+=4
+    return new Image(out)
+    
+  #gamma look up table for increasing performance
+  gammaLUT:(gammatemp)=>
+    result = []
+    for i in [0..255]
+      b = i/255
+      k = Math.round(255*(Math.pow(b,gammatemp)))
+      result.push k
+    return result
+
+  # A sepia filter.
+  sepia:(sepiaIntensity = 30)=>
+    sepiaDepth = 20
+    out = @getArray()
+    i = 0
+    while i < out.data.length
+      r = out.data[i]
+      g = out.data[i+1]
+      b = out.data[i+2]
+      a = out.data[i+3]
+      avg = (r+g+b)/3
+      r = @clamp(avg + (sepiaDepth*2))
+      g = @clamp(avg + sepiaDepth)
+      b = @clamp(avg - sepiaIntensity)
+      out.data[i] = r
+      out.data[i+1] = g
+      out.data[i+2] = b
+      i+=4
+    return new Image(out)    
 
 
