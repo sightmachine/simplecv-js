@@ -857,6 +857,7 @@ module.exports = class Image extends Model
             i += 4        
         retVal = new Image(dst)
     return retVal
+
   canny:(highThreshold = 60, lowThreshold = 30, kernel_size = 5)=>
     ######################################################################################################################################
     #The Canny edge detector is an edge detection operator that uses a multi-stage algorithm to detect a wide range of edges in images. 
@@ -1014,4 +1015,30 @@ module.exports = class Image extends Model
           out.data[a+2] = 0
         a+= 4
     return new Image(out)     
+
+  #posterize effect(cartooning effect) http://en.wikipedia.org/wiki/Posterization
+  posterize:(adjust = 5)=>
+    numOfAreas = 256 / adjust
+    numOfValues = 255 / (adjust - 1)
+    out = @getArray()
+    posterize_LUT = @posterizeLUT(numOfAreas,numOfValues)
+    i = 0
+    while i < out.data.length
+      r = out.data[i]
+      g = out.data[i+1]
+      b = out.data[i+2]
+      out.data[i] = posterize_LUT[r]
+      out.data[i+1] = posterize_LUT[g]
+      out.data[i+2] = posterize_LUT[b]
+      i+=4
+    return new Image(out)
+
+  #look up table for posterize
+  posterizeLUT:(numOfAreas,numOfValues)=>
+    result = []
+    for i in [0..255]
+      k = Math.floor Math.floor(i / numOfAreas) * numOfValues
+      result.push k
+    return result    
+
 
