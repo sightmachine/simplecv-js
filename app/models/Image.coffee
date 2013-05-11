@@ -268,7 +268,52 @@ module.exports = class Image extends Model
       i += 4
     return new Image(matrix)
 
-  # Return a gray matrix suitable for grayscale cv operations.
+  #Returns a 2D matrix of size @heightX@width
+  #each element at (i,j) is the RED value of the corresponding pixel at (i,j) on the image matrix
+  #Useful for making things easy when we need to compare pixel neighbourhood and others
+  getRedMatrix:()=>
+    result = []; x = []
+    matrix = @ctx.getImageData(0,0,@width,@height)
+    a = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        x.push matrix.data[a]
+        a+=4
+      result.push x
+      x = []
+    return result
+  
+  #Returns a 2D matrix of size @heightX@width
+  #each element at (i,j) is the GREEN value of the corresponding pixel at (i,j) on the image matrix
+  #Useful for making things easy when we need to compare pixel neighbourhood and others
+  getGreenMatrix:()=>
+    result = []; x = []
+    matrix = @ctx.getImageData(0,0,@width,@height)
+    a = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        x.push matrix.data[a+1]
+        a+=4
+      result.push x
+      x = []
+    return result
+
+  #Returns a 2D matrix of size @heightX@width
+  #each element at (i,j) is the BLUE value of the corresponding pixel at (i,j) on the image matrix
+  #Useful for making things easy when we need to compare pixel neighbourhood and others  
+  getBlueMatrix:()=>
+    result = []; x = []
+    matrix = @ctx.getImageData(0,0,@width,@height)
+    a = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        x.push matrix.data[a+2]
+        a+=4
+      result.push x
+      x = []
+    return result
+
+  # Return a gray Array suitable for grayscale cv operations.
   getGrayArray:() =>
     matrix = @getArray(); out = []
     i = 0;
