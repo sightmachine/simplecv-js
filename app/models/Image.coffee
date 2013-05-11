@@ -1084,7 +1084,7 @@ module.exports = class Image extends Model
       i+=4
     return new Image(out)
     
-  #This method changes an Image into an oilpainting.More info at http://www.codeproject.com/Articles/471994/OilPaintEffect
+  #This method changes an Image into an oilpainting.More info at http://supercomputingblog.com/graphics/oil-painting-algorithm/
   #Don't keep the radius more than 4. As you increase the radius the cost will increase
   #This Algorithm is slow , so lookout a little longer than usual for the result 
   oilpaint:(radius = 2,intensityLevels = 20)=>
