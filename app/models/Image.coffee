@@ -1112,21 +1112,21 @@ module.exports = class Image extends Model
     for i in [radius..@height-radius-1]
       for j in [radius..@width-radius-1]
         intensityCount = []; averageR = []; averageG = []; averageB = []
-        for k in [0..intensityLevels-1]
+        for k in [0..intensityLevels]
           intensityCount.push 0
           averageR.push 0 
           averageG.push 0
           averageB.push 0
         for p in [(-radius)..radius]
           for q in [(-radius)..radius]
-            d = Math.round (red[i+p][j+q]+green[i+p][j+q]+blue[i+p][j+q])/3
-            curIntensity = Math.round ((d/256)*intensityLevels) 
+            d = (red[i+p][j+q]+green[i+p][j+q]+blue[i+p][j+q])/3
+            curIntensity = Math.round ((d/255.0)*intensityLevels) 
             intensityCount[curIntensity]++
             averageR[curIntensity]+= red[i+p][j+q]
             averageG[curIntensity]+= green[i+p][j+q]
             averageB[curIntensity]+= blue[i+p][j+q]
         curMax = intensityCount[0]
-        for r in [0..intensityLevels-1]
+        for r in [0..intensityLevels]
           if(intensityCount[r] > curMax)
             curMax = intensityCount[r]
             maxIndex = r
