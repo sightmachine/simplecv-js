@@ -268,50 +268,38 @@ module.exports = class Image extends Model
       i += 4
     return new Image(matrix)
 
-  #Returns a 2D matrix of size @heightX@width
-  #each element at (i,j) is the RED value of the corresponding pixel at (i,j) on the image matrix
-  #Useful for making things easy when we need to compare pixel neighbourhood and others
-  getRedMatrix:()=>
+
+  # Returns a single color component 2D-matrix of the same dimensions of the original image.
+  # The parameter "component" chooses the desired color (0 = red, 1 = green, 2 = blue).
+  getSingleColorMatrix:(component) ->
     result = []; x = []
     matrix = @ctx.getImageData(0,0,@width,@height)
     a = 0
     for i in [0..@height-1]
       for j in [0..@width-1]
-        x.push matrix.data[a]
+        x.push matrix.data[a+component]
         a+=4
       result.push x
       x = []
     return result
+    
+  #Returns a 2D matrix of size @heightX@width
+  #each element at (i,j) is the RED value of the corresponding pixel at (i,j) on the image matrix
+  #Useful for making things easy when we need to compare pixel neighbourhood and others
+  getRedMatrix:()=>
+    return @getSingleColorMatrix(0);
   
   #Returns a 2D matrix of size @heightX@width
   #each element at (i,j) is the GREEN value of the corresponding pixel at (i,j) on the image matrix
   #Useful for making things easy when we need to compare pixel neighbourhood and others
   getGreenMatrix:()=>
-    result = []; x = []
-    matrix = @ctx.getImageData(0,0,@width,@height)
-    a = 0
-    for i in [0..@height-1]
-      for j in [0..@width-1]
-        x.push matrix.data[a+1]
-        a+=4
-      result.push x
-      x = []
-    return result
+    return @getSingleColorMatrix(1);
 
   #Returns a 2D matrix of size @heightX@width
   #each element at (i,j) is the BLUE value of the corresponding pixel at (i,j) on the image matrix
   #Useful for making things easy when we need to compare pixel neighbourhood and others  
   getBlueMatrix:()=>
-    result = []; x = []
-    matrix = @ctx.getImageData(0,0,@width,@height)
-    a = 0
-    for i in [0..@height-1]
-      for j in [0..@width-1]
-        x.push matrix.data[a+2]
-        a+=4
-      result.push x
-      x = []
-    return result
+    return @getSingleColorMatrix(2);
 
   # Return a gray Array suitable for grayscale cv operations.
   getGrayArray:() =>
@@ -329,7 +317,7 @@ module.exports = class Image extends Model
     i = 0; a = 1;
     while i < matrix.data.length
       avg = (matrix.data[i] + matrix.data[i+1] + matrix.data[i+2]) / 3
-      x.push [avg]    
+      x.push avg    
       i += 4
       if a is @width
         result.push x; x = []; a = 1
