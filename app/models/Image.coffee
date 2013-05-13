@@ -124,23 +124,23 @@ module.exports = class Image extends Model
     x_pos = 0; y_pos = 0; brightness = 0
     for i in [0..@height-1]
       for j in [0..@width-1]
-        if points[i][j][0] > brightness
+        if points[i][j] > brightness
           x_pos = i
           y_pos = j
-          brightness = points[i][j][0]
+          brightness = points[i][j]
     return [x_pos, y_pos, brightness]
 
   # Returns coordinates and value of the pixel with the smallest
   # brightness following the format [x_pos, y_pos, value]
   getDarkestPixel:()=>
     points = @getGrayMatrix()
-    x_pos = 0; y_pos = 0; brightness = points[0][0][0]
+    x_pos = 0; y_pos = 0; brightness = points[0][0]
     for i in [0..@height-1]
       for j in [0..@width-1]
-        if points[i][j][0] < brightness
+        if points[i][j] < brightness
           x_pos = i
           y_pos = j
-          brightness = points[i][j][0]
+          brightness = points[i][j]
     return [x_pos, y_pos, brightness]
 
   # Returns the average brightness of the image.
@@ -149,7 +149,7 @@ module.exports = class Image extends Model
     brightness_sum = 0
     for i in [0..@height-1]
       for j in [0..@width-1]
-        brightness_sum += points[i][j][0]
+        brightness_sum += points[i][j]
     return brightness_sum / (@width * @height)
 
   
