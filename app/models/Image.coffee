@@ -124,23 +124,23 @@ module.exports = class Image extends Model
     x_pos = 0; y_pos = 0; brightness = 0
     for i in [0..@height-1]
       for j in [0..@width-1]
-        if points[i][j][0] > brightness
+        if points[i][j] > brightness
           x_pos = i
           y_pos = j
-          brightness = points[i][j][0]
+          brightness = points[i][j]
     return [x_pos, y_pos, brightness]
 
   # Returns coordinates and value of the pixel with the smallest
   # brightness following the format [x_pos, y_pos, value]
   getDarkestPixel:()=>
     points = @getGrayMatrix()
-    x_pos = 0; y_pos = 0; brightness = points[0][0][0]
+    x_pos = 0; y_pos = 0; brightness = points[0][0]
     for i in [0..@height-1]
       for j in [0..@width-1]
-        if points[i][j][0] < brightness
+        if points[i][j] < brightness
           x_pos = i
           y_pos = j
-          brightness = points[i][j][0]
+          brightness = points[i][j]
     return [x_pos, y_pos, brightness]
 
   # Returns the average brightness of the image.
@@ -149,7 +149,7 @@ module.exports = class Image extends Model
     brightness_sum = 0
     for i in [0..@height-1]
       for j in [0..@width-1]
-        brightness_sum += points[i][j][0]
+        brightness_sum += points[i][j]
     return brightness_sum / (@width * @height)
 
   
@@ -268,7 +268,40 @@ module.exports = class Image extends Model
       i += 4
     return new Image(matrix)
 
-  # Return a gray matrix suitable for grayscale cv operations.
+
+  # Returns a single color component 2D-matrix of the same dimensions of the original image.
+  # The parameter "component" chooses the desired color (0 = red, 1 = green, 2 = blue).
+  getSingleColorMatrix:(component) ->
+    result = []; x = []
+    matrix = @ctx.getImageData(0,0,@width,@height)
+    a = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        x.push matrix.data[a+component]
+        a+=4
+      result.push x
+      x = []
+    return result
+    
+  #Returns a 2D matrix of size @heightX@width
+  #each element at (i,j) is the RED value of the corresponding pixel at (i,j) on the image matrix
+  #Useful for making things easy when we need to compare pixel neighbourhood and others
+  getRedMatrix:()=>
+    return @getSingleColorMatrix(0);
+  
+  #Returns a 2D matrix of size @heightX@width
+  #each element at (i,j) is the GREEN value of the corresponding pixel at (i,j) on the image matrix
+  #Useful for making things easy when we need to compare pixel neighbourhood and others
+  getGreenMatrix:()=>
+    return @getSingleColorMatrix(1);
+
+  #Returns a 2D matrix of size @heightX@width
+  #each element at (i,j) is the BLUE value of the corresponding pixel at (i,j) on the image matrix
+  #Useful for making things easy when we need to compare pixel neighbourhood and others  
+  getBlueMatrix:()=>
+    return @getSingleColorMatrix(2);
+
+  # Return a gray Array suitable for grayscale cv operations.
   getGrayArray:() =>
     matrix = @getArray(); out = []
     i = 0;
@@ -284,7 +317,7 @@ module.exports = class Image extends Model
     i = 0; a = 1;
     while i < matrix.data.length
       avg = (matrix.data[i] + matrix.data[i+1] + matrix.data[i+2]) / 3
-      x.push [avg]    
+      x.push avg    
       i += 4
       if a is @width
         result.push x; x = []; a = 1
@@ -1082,6 +1115,64 @@ module.exports = class Image extends Model
       out.data[i+1] = g
       out.data[i+2] = b
       i+=4
+    return new Image(out)
+    
+  #This method changes an Image into an oilpainting.More info at http://supercomputingblog.com/graphics/oil-painting-algorithm/
+  #Don't keep the radius more than 4. As you increase the radius the cost will increase
+  #This Algorithm is slow , so lookout a little longer than usual for the result 
+  oilpaint:(radius = 2,intensityLevels = 20)=>
+    red = []; green = []; blue = []
+    finalRed = []; finalGreen = []; finalBlue = []
+    out = @getArray()
+    x = []; y = []; z = []; f = [];g = []; h =[]
+    a = 0;
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        x.push out.data[a]
+        f.push out.data[a]
+        y.push out.data[a+1]
+        g.push out.data[a+1]
+        z.push out.data[a+2]
+        h.push out.data[a+2]
+        a+=4
+      red.push x
+      finalRed.push f
+      green.push y
+      finalGreen.push g
+      blue.push z
+      finalBlue.push h
+      x = []; y = []; z = []; f = [];g = []; h =[]
+    for i in [radius..@height-radius-1]
+      for j in [radius..@width-radius-1]
+        intensityCount = []; averageR = []; averageG = []; averageB = []
+        for k in [0..intensityLevels]
+          intensityCount.push 0
+          averageR.push 0 
+          averageG.push 0
+          averageB.push 0
+        for p in [(-radius)..radius]
+          for q in [(-radius)..radius]
+            d = (red[i+p][j+q]+green[i+p][j+q]+blue[i+p][j+q])/3
+            curIntensity = Math.round ((d/255.0)*intensityLevels) 
+            intensityCount[curIntensity]++
+            averageR[curIntensity]+= red[i+p][j+q]
+            averageG[curIntensity]+= green[i+p][j+q]
+            averageB[curIntensity]+= blue[i+p][j+q]
+        curMax = intensityCount[0]
+        for r in [0..intensityLevels]
+          if(intensityCount[r] > curMax)
+            curMax = intensityCount[r]
+            maxIndex = r
+        finalRed[i][j] = averageR[maxIndex] / curMax
+        finalGreen[i][j] = averageG[maxIndex] / curMax
+        finalBlue[i][j] = averageB[maxIndex] / curMax
+    b = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        out.data[b] = finalRed[i][j]
+        out.data[b+1] = finalGreen[i][j]
+        out.data[b+2] = finalBlue[i][j]
+        b+=4
     return new Image(out)    
 
 
