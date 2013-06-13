@@ -1084,4 +1084,26 @@ module.exports = class Image extends Model
       i+=4
     return new Image(out)    
 
+  #flips the image horizontally
+  flipHorizontal:()=>
+    flipped = document.createElement("canvas")
+    flipped.width = @width
+    flipped.height = @height
+    ct = flipped.getContext("2d")
+    ct.translate(@width,0)
+    ct.scale(-1,1)
+    ct.drawImage(@canvas, 0, 0)
+    return new Image(flipped)    
+
+  #flips image vertically
+  flipVertical:()=>
+    flipped = document.createElement("canvas")
+    flipped.width = @width
+    flipped.height = @height
+    ct = flipped.getContext("2d")
+    ct.scale(1,-1)
+    ct.drawImage(@canvas, 0, -@height)
+    return new Image(flipped)    
+
+
 
