@@ -1082,6 +1082,64 @@ module.exports = class Image extends Model
       out.data[i+1] = g
       out.data[i+2] = b
       i+=4
+    return new Image(out)
+    
+  #This method changes an Image into an oilpainting.More info at http://supercomputingblog.com/graphics/oil-painting-algorithm/
+  #Don't keep the radius more than 4. As you increase the radius the cost will increase
+  #This Algorithm is slow , so lookout a little longer than usual for the result 
+  oilpaint:(radius = 2,intensityLevels = 20)=>
+    red = []; green = []; blue = []
+    finalRed = []; finalGreen = []; finalBlue = []
+    out = @getArray()
+    x = []; y = []; z = []; f = [];g = []; h =[]
+    a = 0;
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        x.push out.data[a]
+        f.push out.data[a]
+        y.push out.data[a+1]
+        g.push out.data[a+1]
+        z.push out.data[a+2]
+        h.push out.data[a+2]
+        a+=4
+      red.push x
+      finalRed.push f
+      green.push y
+      finalGreen.push g
+      blue.push z
+      finalBlue.push h
+      x = []; y = []; z = []; f = [];g = []; h =[]
+    for i in [radius..@height-radius-1]
+      for j in [radius..@width-radius-1]
+        intensityCount = []; averageR = []; averageG = []; averageB = []
+        for k in [0..intensityLevels]
+          intensityCount.push 0
+          averageR.push 0 
+          averageG.push 0
+          averageB.push 0
+        for p in [(-radius)..radius]
+          for q in [(-radius)..radius]
+            d = (red[i+p][j+q]+green[i+p][j+q]+blue[i+p][j+q])/3
+            curIntensity = Math.round ((d/255.0)*intensityLevels) 
+            intensityCount[curIntensity]++
+            averageR[curIntensity]+= red[i+p][j+q]
+            averageG[curIntensity]+= green[i+p][j+q]
+            averageB[curIntensity]+= blue[i+p][j+q]
+        curMax = intensityCount[0]
+        for r in [0..intensityLevels]
+          if(intensityCount[r] > curMax)
+            curMax = intensityCount[r]
+            maxIndex = r
+        finalRed[i][j] = averageR[maxIndex] / curMax
+        finalGreen[i][j] = averageG[maxIndex] / curMax
+        finalBlue[i][j] = averageB[maxIndex] / curMax
+    b = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        out.data[b] = finalRed[i][j]
+        out.data[b+1] = finalGreen[i][j]
+        out.data[b+2] = finalBlue[i][j]
+        b+=4
     return new Image(out)    
 
   #flips the image horizontally
