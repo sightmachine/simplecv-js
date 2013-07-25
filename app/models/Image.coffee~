@@ -1170,9 +1170,10 @@ module.exports = class Image extends Model
     comp = ccv.detect_objects({"canvas" : (@canvas),"cascade" : cascade,"interval" : 5,"min_neighbors" : 1})
     return comp
   
-  #simple stretch function , takes in two thresholds and makes the value of all the values between 0 and lowthreshold 0 and
-  #makes all the values between high and 255 into 255 
+  #simple stretch function , takes in two thresholds and sets all the values between 0 and lowthreshold to 0 and
+  #sets all the values between high and 255 into 255 
   #returns a grayscale image
+  #i.stretch(low,high) .. low shoul be less than high to get the desired effect
   stretch:(low=50,high=100)=>
     alert "i'm in"
     alert "i initialized" 
