@@ -1169,6 +1169,36 @@ module.exports = class Image extends Model
   getFaces:()=>
     comp = ccv.detect_objects({"canvas" : (@canvas),"cascade" : cascade,"interval" : 5,"min_neighbors" : 1})
     return comp
+  
+  #simple stretch function , takes in two thresholds and sets all the values between 0 and lowthreshold to 0 and
+  #sets all the values between high and 255 into 255 
+  #returns a grayscale image
+  #i.stretch(low,high) .. low shoul be less than high to get the desired effect
+  stretch:(low=50,high=100)=>
+    alert "i'm in"
+    alert "i initialized" 
+    gray = @getGrayArray()
+    out  = @getArray()
+    i    = 0
+    a    = 0
+    alert "going to while city"
+    while(i < gray.length)
+      #alert "I'm inside while"
+      if(gray[i] < low)
+        alert "inside low"
+        out.data[a] = 0; out.data[a+1] =0; out.data[a+2] = 0
+      if(gray[i] > high)
+        alert "inside high"
+        out.data[a] = 255; out.data[a+1] = 255; out.data[a+2] = 255
+      else
+        out.data[a] = out.data[a+1] = out.data[a+2] = gray[i]
+      i+=1
+      a+=4
+    alert "completed"  
+    return new Image(out)  
+        
+    
+      
     
 
 

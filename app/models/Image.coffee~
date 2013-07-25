@@ -1161,7 +1161,44 @@ module.exports = class Image extends Model
     ct = flipped.getContext("2d")
     ct.scale(1,-1)
     ct.drawImage(@canvas, 0, -@height)
-    return new Image(flipped)    
+    return new Image(flipped)
+    
+  #this is a basic face detection method which when used with image like this
+  #faces  = i.getFaces()
+  #gives a set of faces 
+  getFaces:()=>
+    comp = ccv.detect_objects({"canvas" : (@canvas),"cascade" : cascade,"interval" : 5,"min_neighbors" : 1})
+    return comp
+  
+  #simple stretch function , takes in two thresholds and makes the value of all the values between 0 and lowthreshold 0 and
+  #makes all the values between high and 255 into 255 
+  #returns a grayscale image
+  stretch:(low=50,high=100)=>
+    alert "i'm in"
+    alert "i initialized" 
+    gray = @getGrayArray()
+    out  = @getArray()
+    i    = 0
+    a    = 0
+    alert "going to while city"
+    while(i < gray.length)
+      #alert "I'm inside while"
+      if(gray[i] < low)
+        alert "inside low"
+        out.data[a] = 0; out.data[a+1] =0; out.data[a+2] = 0
+      if(gray[i] > high)
+        alert "inside high"
+        out.data[a] = 255; out.data[a+1] = 255; out.data[a+2] = 255
+      else
+        out.data[a] = out.data[a+1] = out.data[a+2] = gray[i]
+      i+=1
+      a+=4
+    alert "completed"  
+    return new Image(out)  
+        
+    
+      
+    
 
 
 
