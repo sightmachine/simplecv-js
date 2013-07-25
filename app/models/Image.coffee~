@@ -1161,15 +1161,7 @@ module.exports = class Image extends Model
     ct = flipped.getContext("2d")
     ct.scale(1,-1)
     ct.drawImage(@canvas, 0, -@height)
-    return new Image(flipped)
-    
-  #this is a basic face detection method which when used with image like this
-  #faces  = i.getFaces()
-  #gives a set of faces 
-  getFaces:()=>
-    comp = ccv.detect_objects({"canvas" : (@canvas),"cascade" : cascade,"interval" : 5,"min_neighbors" : 1})
-    return comp
-    
+    return new Image(flipped)    
 
 
 
