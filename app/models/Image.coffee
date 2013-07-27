@@ -1209,6 +1209,12 @@ module.exports = class Image extends Model
     dl.noFill()
     dl.ellipse(x,y,width,height)
     return @
+    
+  #Draws a circle with (x,y) as center with radius
+  drawCircle:(x,y,radius)=>
+    return @drawEllipse(x,y,radius,radius)
+    
+    
         
     
       
