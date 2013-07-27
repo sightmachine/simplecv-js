@@ -1197,6 +1197,12 @@ module.exports = class Image extends Model
     dl.rect(x,y,width,height)
     return @
     
+  #Draws a line from (x1,y1) to (x2,y2) 
+  drawLine:(x1,y1,x2,y2)=>
+    dl = @addDrawingLayer()
+    dl.line(x1,y1,x2,y2)
+    return @
+    
         
     
       
