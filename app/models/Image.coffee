@@ -1202,7 +1202,13 @@ module.exports = class Image extends Model
     dl = @addDrawingLayer()
     dl.line(x1,y1,x2,y2)
     return @
-    
+  
+  #Draws an ellipse centered at (x,y) with a height and width
+  drawEllipse:(x,y,width,height)=>
+    dl = @addDrawingLayer()
+    dl.noFill()
+    dl.ellipse(x,y,width,height)
+    return @
         
     
       
