@@ -1234,12 +1234,14 @@ module.exports = class Image extends Model
       i+=4
     return new Image(out)
     
-    
-    
-        
-    
-      
-    
+  #Prewitt gradients for use in prewitt operator
+  prewittX:(grayscale=false)=>
+    kernel = [[-1.0,-1.0,-1.0],[0.0,0.0,0.0],[1.0,1.0,1.0]]
+    return @kernel3x3(kernel,grayscale)
+
+  prewittY:(grayscale=false)=>
+    kernel = [[-1.0,0.0,-1.0],[-1.0,0.0,-1.0],[-1.0,0.0,-1.0]]
+    return @kernel3x3(kernel,grayscale)
 
 
 
