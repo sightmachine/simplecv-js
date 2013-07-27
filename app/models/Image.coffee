@@ -1214,6 +1214,13 @@ module.exports = class Image extends Model
   drawCircle:(x,y,radius)=>
     return @drawEllipse(x,y,radius,radius)
     
+  #Draw a triangle with vertices (x1,y1) (x2,y2) (x3,y3)
+  drawTriangle:(x1,y1,x2,y2,x3,y3)=>
+    dl = @addDrawingLayer()
+    dl.noFill()
+    dl.triangle(x1, y1, x2, y2, x3, y3)
+    return @
+    
     
         
     
