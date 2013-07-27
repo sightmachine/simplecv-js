@@ -1236,12 +1236,22 @@ module.exports = class Image extends Model
     
   #Prewitt gradients for use in prewitt operator
   prewittX:(grayscale=false)=>
-    kernel = [[-1.0,-1.0,-1.0],[0.0,0.0,0.0],[1.0,1.0,1.0]]
+    kernel = [[-1.0,0.0,1.0],[-1.0,0.0,1.0],[-1.0,0.0,1.0]]
     return @kernel3x3(kernel,grayscale)
 
   prewittY:(grayscale=false)=>
-    kernel = [[-1.0,0.0,-1.0],[-1.0,0.0,-1.0],[-1.0,0.0,-1.0]]
+    kernel = [[1.0,1.0,1.0],[0.0,0.0,0.0],[-1.0,-1.0,-1.0]]
     return @kernel3x3(kernel,grayscale)
-
-
-
+    
+  #A prewitt edge detector
+  prewitt:()=>
+    Im  = @grayscale()
+    ximg = Im.prewittX()
+    yimg = Im.prewittY()
+    out = @getArray()
+    xv = ximg.getArray()
+    yv = yimg.getArray()
+    for i in [0..xv.data.length]
+      d = Math.sqrt((xv.data[i]*xv.data[i])+(yv.data[i]*yv.data[i]))
+      out.data[i] = @clamp(d) # we reall should scale versus clamp
+    return new Image(out)
