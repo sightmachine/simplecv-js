@@ -1188,7 +1188,15 @@ module.exports = class Image extends Model
         out.data[a] = out.data[a+1] = out.data[a+2] = gray[i]
       i+=1
       a+=4
-    return new Image(out)  
+    return new Image(out)
+  
+  #Draws a rectangular box in the image . the default drawing mode being from the corner.
+  drawRect:(x,y,width,height)=>
+    dl = @addDrawingLayer()
+    dl.noFill()
+    dl.rect(x,y,width,height)
+    return @
+    
         
     
       
