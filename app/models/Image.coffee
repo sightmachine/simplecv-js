@@ -1221,6 +1221,20 @@ module.exports = class Image extends Model
     dl.triangle(x1, y1, x2, y2, x3, y3)
     return @
     
+  #Introduces a noise by a random value in [min,max]
+  noise:(min=1,max=100)=>
+    rand = Math.round(Math.random() * (max-min)) + min
+    im   = @getArray()    
+    out  = @getArray()
+    i = 0
+    while i<im.data.length
+      out.data[i] = @clamp(im.data[i]+rand)
+      out.data[i+1]=@clamp(im.data[i+1]+rand)
+      out.data[i+2]=@clamp(im.data[i+2]+rand)
+      i+=4
+    return new Image(out)
+    
+    
     
         
     
