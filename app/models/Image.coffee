@@ -1255,3 +1255,18 @@ module.exports = class Image extends Model
       d = Math.sqrt((xv.data[i]*xv.data[i])+(yv.data[i]*yv.data[i]))
       out.data[i] = @clamp(d) # we reall should scale versus clamp
     return new Image(out)
+    
+  # A simple vibrance effect filter.
+  vibrance:(stone =50)=>
+    out = @getArray()
+    i = 0
+    while i<out.data.length
+      max = Math.max(Math.max(out.data[i], out.data[i+1]), out.data[i+2])
+      avg = (out.data[i] + out.data[i+1] + out.data[i+2]) / 3
+      temp= (Math.abs(max - avg) * 2 / 255)
+      amt = (temp * stone)/100
+      out.data[i] += (max - out.data[i]) * amt if out.data[i] isnt max
+      out.data[i+1] += (max - out.data[i+1]) * amt if out.data[i+1] isnt max
+      out.data[i+2] += (max - out.data[i+2]) * amt if out.data[i+2] isnt max
+      i+=4
+    return new Image(out)
