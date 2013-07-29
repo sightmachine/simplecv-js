@@ -1274,3 +1274,61 @@ module.exports = class Image extends Model
       out.data[i+2] += (max - out.data[i+2]) * amt if out.data[i+2] isnt max
       i+=4
     return new Image(out)
+    
+  # A reshaper function for use with image deformation filters. Based on the psx.js image processing library
+  # https://github.com/zhijie/psx
+  reshaper:(func)=>
+    img = @getArray()
+    out = @getArray()
+    h = 0
+
+    while h < @height
+      pdst = h * @width * 4
+      w = 0
+      while w < @width
+        # change coordinates to [-1,1]
+        ax = 2.0 * w / @width - 1
+        ay = 2.0 * h / @height - 1
+        normalCoord = [ax,ay]
+        radius = Math.sqrt ax * ax + ay * ay
+        phase = Math.atan2(normalCoord[1], normalCoord[0])
+        t = func(radius, phase)
+        radius = t[0]
+        phase = t[1]
+        newx = radius * Math.cos(phase)
+        newy = radius * Math.sin(phase)
+        centerX = (newx + 1) / 2 * @width
+        centerY = (newy + 1) / 2 * @height
+        baseX = Math.floor(centerX)
+        baseY = Math.floor(centerY)
+        ratioR = centerX - baseX
+        ratioL = 1 - ratioR
+        ratioB = centerY - baseY
+        ratioT = 1 - ratioB
+        if baseX < 0 or baseY < 0 or baseX >= @width or baseY >= @height
+          pdst += 4
+          continue
+        # topleft
+        pstl = (baseX + baseY * @width) * 4
+        # topright
+        pstr = pstl + 4
+        # bottomleft
+        psbl = pstl + @width * 4
+        # bottom right
+        psbr = psbl + 4
+        ch = 0
+        while ch < 4
+          tc = img.data[pstl++] * ratioL + img.data[pstr++] * ratioR
+          bc = img.data[psbl++] * ratioL + img.data[psbr++] * ratioR
+          out.data[pdst++] = tc * ratioT + bc * ratioB
+          ch++
+        w++
+      h++
+    return new Image(out)
+  
+  #A fish eye Image deformation filter
+  fisheye:()=>
+    param = 1.5 # [0.1, 4]
+    func = (r, p) ->
+      return [Math.pow(r, param) / Math.sqrt(2), p]
+    return @reshaper(func)      
