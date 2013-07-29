@@ -1194,37 +1194,6 @@ module.exports = class Image extends Model
       a+=4
     return new Image(out)
   
-  #Draws a rectangular box in the image . the default drawing mode being from the corner.
-  drawRect:(x,y,width,height)=>
-    dl = @addDrawingLayer()
-    dl.noFill()
-    dl.rect(x,y,width,height)
-    return @
-    
-  #Draws a line from (x1,y1) to (x2,y2) 
-  drawLine:(x1,y1,x2,y2)=>
-    dl = @addDrawingLayer()
-    dl.line(x1,y1,x2,y2)
-    return @
-  
-  #Draws an ellipse centered at (x,y) with a height and width
-  drawEllipse:(x,y,width,height)=>
-    dl = @addDrawingLayer()
-    dl.noFill()
-    dl.ellipse(x,y,width,height)
-    return @
-    
-  #Draws a circle with (x,y) as center with radius
-  drawCircle:(x,y,radius)=>
-    return @drawEllipse(x,y,radius,radius)
-    
-  #Draw a triangle with vertices (x1,y1) (x2,y2) (x3,y3)
-  drawTriangle:(x1,y1,x2,y2,x3,y3)=>
-    dl = @addDrawingLayer()
-    dl.noFill()
-    dl.triangle(x1, y1, x2, y2, x3, y3)
-    return @
-    
   #Introduces a noise by a random value in [min,max]
   noise:(min=1,max=100)=>
     rand = Math.round(Math.random() * (max-min)) + min
@@ -1339,4 +1308,11 @@ module.exports = class Image extends Model
     y = 0.8
     func = (r,p) ->
       return [Math.pow(r,1.0/x)*y, p]
-    return @reshaper(func)  
+    return @reshaper(func)
+    
+  # A swirl effect filter
+  swirl:()=>
+    x = 0.5
+    y = 4.0
+    func = (r,p) ->
+      
