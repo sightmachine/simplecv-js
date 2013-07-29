@@ -1310,9 +1310,5 @@ module.exports = class Image extends Model
       return [Math.pow(r,1.0/x)*y, p]
     return @reshaper(func)
     
-  # A swirl effect filter
-  swirl:()=>
-    x = 0.5
-    y = 4.0
-    func = (r,p) ->
+
       
