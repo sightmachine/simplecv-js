@@ -1331,4 +1331,12 @@ module.exports = class Image extends Model
     param = 1.5 # [0.1, 4]
     func = (r, p) ->
       return [Math.pow(r, param) / Math.sqrt(2), p]
-    return @reshaper(func)      
+    return @reshaper(func)
+    
+  #A shrink effect filter
+  shrink:()=>
+    x = 1.8
+    y = 0.8
+    func = (r,p) ->
+      return [Math.pow(r,1.0/x)*y, p]
+    return @reshaper(func)  
