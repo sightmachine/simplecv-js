@@ -1167,12 +1167,8 @@ module.exports = class Image extends Model
   #faces  = i.getFaces()
   #gives a set of faces 
   getFaces:()=>
-    dl  = @addDrawingLayer()
-    dl.noFill()
     comp = ccv.detect_objects({"canvas" : (@canvas),"cascade" : cascade,"interval" : 5,"min_neighbors" : 1})
-    for face in comp
-      dl.rect(face.x,face.y,face.width,face.height)
-    return @
+    return comp
   
   #simple stretch function , takes in two thresholds and sets all the values between 0 and lowthreshold to 0 and
   #sets all the values between high and 255 into 255 
