@@ -1161,7 +1161,150 @@ module.exports = class Image extends Model
     ct = flipped.getContext("2d")
     ct.scale(1,-1)
     ct.drawImage(@canvas, 0, -@height)
-    return new Image(flipped)    
+    return new Image(flipped)
+    
+  #this is a basic face detection method which when used with image like this
+  #faces  = i.getFaces()
+  #gives a set of faces 
+  getFaces:()=>
+    comp = ccv.detect_objects({"canvas" : (@canvas),"cascade" : cascade,"interval" : 5,"min_neighbors" : 1})
+    return comp
+  
+  #simple stretch function , takes in two thresholds and sets all the values between 0 and lowthreshold to 0 and
+  #sets all the values between high and 255 into 255 
+  #returns a grayscale image
+  #i.stretch(low,high) .. low shoul be less than high to get the desired effect
+  stretch:(low=50,high=100)=>
+    gray = @getGrayArray()
+    out  = @getArray()
+    i    = 0
+    a    = 0
+    while(i < gray.length)
+      if(gray[i] < low)
+        out.data[a] = 0; out.data[a+1] =0; out.data[a+2] = 0
+      if(gray[i] > high)
+        out.data[a] = 255; out.data[a+1] = 255; out.data[a+2] = 255
+      else
+        out.data[a] = out.data[a+1] = out.data[a+2] = gray[i]
+      i+=1
+      a+=4
+    return new Image(out)
+  
+  #Introduces a noise by a random value in [min,max]
+  noise:(min=1,max=100)=>
+    rand = Math.round(Math.random() * (max-min)) + min
+    im   = @getArray()    
+    out  = @getArray()
+    i = 0
+    while i<im.data.length
+      out.data[i] = @clamp(im.data[i]+rand)
+      out.data[i+1]=@clamp(im.data[i+1]+rand)
+      out.data[i+2]=@clamp(im.data[i+2]+rand)
+      i+=4
+    return new Image(out)
+    
+  #Prewitt gradients for use in prewitt operator
+  prewittX:(grayscale=false)=>
+    kernel = [[-1.0,0.0,1.0],[-1.0,0.0,1.0],[-1.0,0.0,1.0]]
+    return @kernel3x3(kernel,grayscale)
 
+  prewittY:(grayscale=false)=>
+    kernel = [[1.0,1.0,1.0],[0.0,0.0,0.0],[-1.0,-1.0,-1.0]]
+    return @kernel3x3(kernel,grayscale)
+    
+  #A prewitt edge detector
+  prewitt:()=>
+    Im  = @grayscale()
+    ximg = Im.prewittX()
+    yimg = Im.prewittY()
+    out = @getArray()
+    xv = ximg.getArray()
+    yv = yimg.getArray()
+    for i in [0..xv.data.length]
+      d = Math.sqrt((xv.data[i]*xv.data[i])+(yv.data[i]*yv.data[i]))
+      out.data[i] = @clamp(d) # we reall should scale versus clamp
+    return new Image(out)
+    
+  # A simple vibrance effect filter.
+  vibrance:(stone =50)=>
+    out = @getArray()
+    i = 0
+    while i<out.data.length
+      max = Math.max(Math.max(out.data[i], out.data[i+1]), out.data[i+2])
+      avg = (out.data[i] + out.data[i+1] + out.data[i+2]) / 3
+      temp= (Math.abs(max - avg) * 2 / 255)
+      amt = (temp * stone)/100
+      out.data[i] += (max - out.data[i]) * amt if out.data[i] isnt max
+      out.data[i+1] += (max - out.data[i+1]) * amt if out.data[i+1] isnt max
+      out.data[i+2] += (max - out.data[i+2]) * amt if out.data[i+2] isnt max
+      i+=4
+    return new Image(out)
+    
+  # A reshaper function for use with image deformation filters. Based on the psx.js image processing library
+  # https://github.com/zhijie/psx
+  reshaper:(func)=>
+    img = @getArray()
+    out = @getArray()
+    h = 0
 
+    while h < @height
+      pdst = h * @width * 4
+      w = 0
+      while w < @width
+        # change coordinates to [-1,1]
+        ax = 2.0 * w / @width - 1
+        ay = 2.0 * h / @height - 1
+        normalCoord = [ax,ay]
+        radius = Math.sqrt ax * ax + ay * ay
+        phase = Math.atan2(normalCoord[1], normalCoord[0])
+        t = func(radius, phase)
+        radius = t[0]
+        phase = t[1]
+        newx = radius * Math.cos(phase)
+        newy = radius * Math.sin(phase)
+        centerX = (newx + 1) / 2 * @width
+        centerY = (newy + 1) / 2 * @height
+        baseX = Math.floor(centerX)
+        baseY = Math.floor(centerY)
+        ratioR = centerX - baseX
+        ratioL = 1 - ratioR
+        ratioB = centerY - baseY
+        ratioT = 1 - ratioB
+        if baseX < 0 or baseY < 0 or baseX >= @width or baseY >= @height
+          pdst += 4
+          continue
+        # topleft
+        pstl = (baseX + baseY * @width) * 4
+        # topright
+        pstr = pstl + 4
+        # bottomleft
+        psbl = pstl + @width * 4
+        # bottom right
+        psbr = psbl + 4
+        ch = 0
+        while ch < 4
+          tc = img.data[pstl++] * ratioL + img.data[pstr++] * ratioR
+          bc = img.data[psbl++] * ratioL + img.data[psbr++] * ratioR
+          out.data[pdst++] = tc * ratioT + bc * ratioB
+          ch++
+        w++
+      h++
+    return new Image(out)
+  
+  #A fish eye Image deformation filter
+  fisheye:()=>
+    param = 1.5 # [0.1, 4]
+    func = (r, p) ->
+      return [Math.pow(r, param) / Math.sqrt(2), p]
+    return @reshaper(func)
+    
+  #A shrink effect filter
+  shrink:()=>
+    x = 1.8
+    y = 0.8
+    func = (r,p) ->
+      return [Math.pow(r,1.0/x)*y, p]
+    return @reshaper(func)
+    
 
+      
