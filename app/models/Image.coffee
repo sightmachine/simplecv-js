@@ -1167,12 +1167,8 @@ module.exports = class Image extends Model
   #faces  = i.getFaces()
   #gives a set of faces 
   getFaces:()=>
-    dl  = @addDrawingLayer()
-    dl.noFill()
     comp = ccv.detect_objects({"canvas" : (@canvas),"cascade" : cascade,"interval" : 5,"min_neighbors" : 1})
-    for face in comp
-      dl.rect(face.x,face.y,face.width,face.height)
-    return @
+    return comp
   
   #simple stretch function , takes in two thresholds and sets all the values between 0 and lowthreshold to 0 and
   #sets all the values between high and 255 into 255 
@@ -1310,6 +1306,7 @@ module.exports = class Image extends Model
       return [Math.pow(r,1.0/x)*y, p]
     return @reshaper(func)
     
+<<<<<<< HEAD
   #A swirl effect filter
   swirl:()=>
     x = 0.5 # [0, 2]
@@ -1347,3 +1344,7 @@ module.exports = class Image extends Model
       b[color.data[i+2]]++
       i+=4
     return [r,g,b]   
+=======
+
+      
+>>>>>>> 53107ab27b02a505b0cd9d132eed4cea5b2859d3
