@@ -1306,7 +1306,6 @@ module.exports = class Image extends Model
       return [Math.pow(r,1.0/x)*y, p]
     return @reshaper(func)
     
-<<<<<<< HEAD
   #A swirl effect filter
   swirl:()=>
     x = 0.5 # [0, 2]
@@ -1343,8 +1342,4 @@ module.exports = class Image extends Model
       g[color.data[i+1]]++
       b[color.data[i+2]]++
       i+=4
-    return [r,g,b]   
-=======
-
-      
->>>>>>> 53107ab27b02a505b0cd9d132eed4cea5b2859d3
+    return [r,g,b]
