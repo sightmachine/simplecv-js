@@ -1310,5 +1310,40 @@ module.exports = class Image extends Model
       return [Math.pow(r,1.0/x)*y, p]
     return @reshaper(func)
     
-
-      
+  #A swirl effect filter
+  swirl:()=>
+    x = 0.5 # [0, 2]
+    y = 4.0 # [1, 9]
+    func = (r,p) ->
+      #alert "in func"
+      z = smoothStep(r, -x, x)
+      #alert z
+      p = p + (1.0 - z) * y
+      #alert [r,p]
+      return [r, p]
+    smoothStep = (x, edge0, edge1) ->
+      #alert "in smooth"
+      x = clampFunc((x - edge0) / (edge1 - edge0), 0.0, 1.0)
+      #alert "out smooth"
+      return x * x * (3 - 2 * x)
+    clampFunc = (val, from, to)=>
+      #alert "in clampFunc"
+      return (if (val) < (from) then (from) else ((if (val) > (to) then (to) else (val))))  
+    return @reshaper(func)
+   
+   #an RGB histogram. returns the tonal frequencies of all color channels like this [r[],g[],b[]]  
+   histogram:()=>
+    r =[]; g=[]; b =[]
+    for i in [0..255]
+      r.push 0
+    for j in [0..255]
+      g.push 0
+    for k in [0..255]
+      b.push 0
+    color = @getArray()
+    while i<color.data.length
+      r[color.data[i]]++
+      g[color.data[i+1]]++
+      b[color.data[i+2]]++
+      i+=4
+    return [r,g,b]   
