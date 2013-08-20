@@ -1306,5 +1306,103 @@ module.exports = class Image extends Model
       return [Math.pow(r,1.0/x)*y, p]
     return @reshaper(func)
     
-
-      
+  #an RGB histogram. returns the tonal frequencies of all color channels like this [r[],g[],b[]]  
+  histogram:()=>
+    r =[]; g=[]; b =[]
+    for i in [0..255]
+      r.push 0
+    for j in [0..255]
+      g.push 0
+    for k in [0..255]
+      b.push 0
+    color = @getArray()
+    while i<color.data.length
+      r[color.data[i]]++
+      g[color.data[i+1]]++
+      b[color.data[i+2]]++
+      i+=4
+    return [r,g,b]
+  
+  #A smoothing median filter which compares the neighbourhood pixels and assigns the pixel value to the median of those values.
+  medianFilter:()=>
+    out =@getMatrix()
+    img =@getMatrix()
+    R = []; G=[]; B=[];pixel=[]
+    for i in [0..8]
+      R.push 0;G.push 0;B.push 0;pixel.push 0
+    for i in [1..@height-2]
+      for j in [1..@width-2]
+        pixel[0]= out[i-1][j-1]
+        pixel[1]= out[i-1][j]
+        pixel[2]= out[i-1][j+1]
+        pixel[3]= out[i][j+1]
+        pixel[4]= out[i+1][j+1]
+        pixel[5]= out[i+1][j]
+        pixel[6]= out[i+1][j-1]
+        pixel[7]= out[i][j-1]
+        pixel[8]= out[i][j]
+        for l in [0..8]
+          R[l] = pixel[l][1]
+          G[l] = pixel[l][2]
+          B[l] = pixel[l][3]
+        R.sort (a, b) ->
+          a - b
+        G.sort (a, b) ->
+          a - b
+        B.sort (a, b) ->
+          a - b        
+        img[i][j][0] = R[4]
+        img[i][j][1] = G[4]
+        img[i][j][2] = B[4]   
+    output = @matrixToOut(img,@)
+    return new Image(output).grayscale()
+  
+  # A util method for changing the matrix form to Image data form 
+  #HELPS IN OUTPUTTING THE IMAGE
+  matrixToOut:(matrix,src)=>
+    out = src.getArray()
+    a = 0
+    for eachRow in matrix
+      for eachColumn in eachRow
+        out.data[a] = eachColumn[0]
+        out.data[a+1] = eachColumn[1]
+        out.data[a+2] = eachColumn[2]
+        out.data[a+3] = 255
+        a+=4
+    return out
+  
+  # A gradient method which checks a pixel neighbourhood and assigns the difference between the highest and lowest pixel
+  # values to it. 
+  morphologicalGradient:()=>
+    out =@getMatrix()
+    img =@getMatrix()
+    R = []; G=[]; B=[];pixel=[]
+    for i in [0..8]
+      R.push 0;G.push 0;B.push 0;pixel.push 0
+    for i in [1..@height-2]
+      for j in [1..@width-2]
+        pixel[0]= out[i-1][j-1]
+        pixel[1]= out[i-1][j]
+        pixel[2]= out[i-1][j+1]
+        pixel[3]= out[i][j+1]
+        pixel[4]= out[i+1][j+1]
+        pixel[5]= out[i+1][j]
+        pixel[6]= out[i+1][j-1]
+        pixel[7]= out[i][j-1]
+        pixel[8]= out[i][j]
+        for l in [0..8]
+          R[l] = pixel[l][1]
+          G[l] = pixel[l][2]
+          B[l] = pixel[l][3]
+        R.sort (a, b) ->
+          a - b
+        G.sort (a, b) ->
+          a - b
+        B.sort (a, b) ->
+          a - b        
+        img[i][j][0] = R[8]-R[0]
+        img[i][j][1] = G[8]-G[0]
+        img[i][j][2] = B[8]-B[0]
+    output = @matrixToOut(img,@)
+    return new Image(output).grayscale()    
+            
