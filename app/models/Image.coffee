@@ -1404,5 +1404,97 @@ module.exports = class Image extends Model
         img[i][j][1] = G[8]-G[0]
         img[i][j][2] = B[8]-B[0]
     output = @matrixToOut(img,@)
-    return new Image(output).grayscale()    
-            
+    return new Image(output).grayscale()
+    
+  # A new Blob method from scratch using connected component labelling .
+  blobs:()=>
+    col = @getMatrix()
+    greyinf = []; labels = []; x =[];y = [];equivalence=[]
+    newLabel = 0; max = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        avg = (col[i][j][0]+col[i][j][1]+col[i][j][2])/3
+        x.push Math.floor(avg)
+        y.push 0
+      greyinf.push x
+      labels.push y
+      x = []
+      y = []
+    for j in [1..@width-1]
+      if greyinf[0][j] is greyinf[0][j-1] and labels[0][j] isnt labels[0][j-1]
+        labels[0][j] = labels[0][j-1]
+      if greyinf[0][j] isnt greyinf[0][j-1]
+        newLabel+=1
+        labels[0][j] = newLabel
+    for i in [1..@height-1]
+      if greyinf[i][0] is greyinf[i-1][0] then labels[i][0] is labels[i-1][0]
+      if greyinf[i][0] isnt greyinf[i-1][0]
+        newLabel+=1
+        labels[i][0] = newLabel
+    for i in [1..@height-1]    
+      for j in [1..@width-1]
+        my = []
+        if greyinf[i][j] is greyinf[i][j-1] and greyinf[i][j] isnt greyinf[i-1][j]
+          labels[i][j] = labels[i][j-1]
+        if greyinf[i][j] isnt greyinf[i][j-1]
+          if greyinf[i][j] is greyinf[i-1][j]
+            labels[i][j] = labels[i-1][j]
+          else
+            newLabel+=1
+            labels[i][j] = newLabel
+        if greyinf[i][j] is greyinf[i-1][j] and greyinf[i][j] is greyinf[i][j-1]
+          if labels[i-1][j] is labels[i][j-1]
+            labels[i][j] = labels[i-1][j]
+          else
+            labels[i][j] = Math.min(labels[i][j-1],labels[i-1][j])
+            my.push Math.max(labels[i][j-1],labels[i-1][j])
+            my.push labels[i][j]
+            equivalence.push my
+    for i in [0..@height-1]
+      for j in [0..@width-1]        
+        if labels[i][j] > max
+          max = labels[i][j]
+    parent = Array(max+1)
+    for i in [0..max]
+      parent[i] = i
+    find = (t,parent)->
+      if parent[t] is t then return t
+      else return find(parent[t],parent)
+    for i in equivalence
+      k = i[0]
+      l = i[1]
+      kRoot = find(k,parent)
+      lRoot = find(l,parent)
+      parent[Math.max(kRoot,lRoot)] = parent[Math.min(kRoot,lRoot)]
+    for i in [1..@height-1]
+      for j in [1..@width-1]
+        labels[i][j] = parent[labels[i][j]]
+    return labels
+    
+  # A blob extraction method . experimental
+  extractBlobs:(threshold=100)=>
+    orig = @getArray() 
+    im = @grayscale()
+    grey = im.getArray()
+    one = new Image(CV.threshold(grey, grey, threshold))
+    labels = one.blobs()
+    max = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        if labels[i][j] > max
+          max = labels[i][j]
+    a = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        if labels[i][j] is 0
+          orig.data[a] = 0
+          orig.data[a+1] = 0
+          orig.data[a+2] = 0
+          orig.data[a+3] = 255
+        else
+          orig.data[a] = @clamp(50 + ((labels[i][j]/max) *255))
+          orig.data[a+1] = 0
+          orig.data[a+2] = 0
+          orig.data[a+3] = 255
+        a+=4
+    return new Image(orig)    

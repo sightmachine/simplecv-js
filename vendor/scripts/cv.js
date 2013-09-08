@@ -40,8 +40,6 @@ CV.grayscale = function(imageSrc, imageDst){
   var src = imageSrc.data, dst = imageDst.data, len = src.length,
       i = 0, j = 0;
       
-  console.log(src, dst, len, i, j)
-
   for(i=0; i < len; i += 4){
     dst[j ++] =
       (src[i] * 0.299 + src[i + 1] * 0.587 + src[i + 2] * 0.114 + 0.5) & 0xff;
