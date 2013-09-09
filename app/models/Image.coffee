@@ -1497,4 +1497,148 @@ module.exports = class Image extends Model
           orig.data[a+2] = 0
           orig.data[a+3] = 255
         a+=4
-    return new Image(orig)    
+    return new Image(orig)
+    
+  watershed:(LMAX = 50)=>
+    img = @medianFilter()
+    imgA = img.morphologicalGradient()
+    col = imgA.getMatrix();greyinf = [];distance = [];labels = [];comp = []
+    scan_step2 = 1;scan_step3 = 1;complabel = []; New_label = 0
+    VMAX = @width + @height
+    x = [];y = [];z = [];a =[];b=[];N = @width*@height
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        avg = (col[i][j][0]+col[i][j][1]+col[i][j][2])/3
+        x.push Math.floor(avg)
+        y.push 0
+        z.push 0
+        a.push 0
+        b.push 0
+      greyinf.push x
+      labels.push y
+      distance.push z
+      comp.push a
+      complabel.push b
+      x=[];y=[];z=[];a=[];b=[] 
+    for i in [1..@height-2]
+      for j in [1..@width-2]
+        if distance[i][j] isnt 1
+          for k in [-1,0,1]
+            for l in [-1,0,1]
+              if greyinf[i+k][j+l] < greyinf[i][j]
+                distance[i][j]=1
+    step2 = (i,j) ->
+      if distance[i][j] isnt 1
+        min = VMAX
+        for k in [-1,0,1]
+          for l in [-1,0,1]
+            if greyinf[i+k][j+l] is greyinf[i][j] and distance[i+k][j+l] > 0
+              if distance[i+k][j+l] < min
+                min = distance[i+k][j+l]
+        if min isnt VMAX and distance[i][j] isnt min+1
+          distance[i][j] = min+1
+    while scan_step2 is 1
+      for i in [0..@height-1]
+        for j in [0..@width-1]
+          comp[i][j] = distance[i][j]
+      for i in [1..@height-2]
+        for j in [1..@width-2]
+          step2(i,j)
+      countleftright = 0
+      countrightleft = 0
+      for i in [0..@height-1]
+        for j in [0..@width-1]
+         if comp[i][j] isnt distance[i][j] then break
+         else countleftright++
+      if countleftright is N
+        scan_step2 = 0
+      else
+        for i in [0..@height-1]
+          for j in [0..@width-1]
+            comp[i][j] = distance[i][j]
+        for i in [@height-2..1]
+          for j in [@width-2..1]
+            step2(i,j)
+        for i in [0..@height-1]
+          for j in [0..@width-1]
+            if comp[i][j] isnt distance[i][j] then break
+            else countrightleft++
+        if countrightleft is N then scan_step2 is 0
+    step3 = (i,j) ->
+      lmin = LMAX; fmin = greyinf[i][j]
+      if distance[i][j] is 0
+        for k in [-1,0,1]
+          for l in [-1,0,1]
+            if greyinf[i+k][j+l] is greyinf[i][j] and labels[i+k][j+l] > 0
+              if labels[i+k][j+l] < lmin
+                lmin = labels[i+k][j+l]
+        if lmin is LMAX and labels[i][j] is 0
+          New_label+=1
+          lmin = New_label + 1
+      if distance[i][j] is 1
+        for k in [-1,0,1]
+          for l in [-1,0,1]
+            if greyinf[i+k][j+l] < fmin
+              fmin = greyinf[i+k][j+l]
+        for k in [-1,0,1]
+          for l in [-1,0,1]            
+            if greyinf[i+k][j+l] is fmin and labels[i+k][j+l] < lmin
+              lmin = labels[i+k][j+l]
+      else
+        for k in [-1,0,1]
+          for l in [-1,0,1]
+            if greyinf[i+k][j+l] is greyinf[i][j] and distance[i+k][j+l]  is distance[i][j]-1
+              if labels[i+k][j+l]>0
+                if labels[i][j] < lmin
+                  lmin = labels[i+k][j+l]
+      if lmin isnt LMAX and labels[i][j] isnt lmin 
+        labels[i][j] = lmin
+    while scan_step3 is 1 
+      for i in [0..@height-1]
+        for j in [0..@width-1]
+          complabel[i][j] = labels[i][j]
+      for i in [1..@height-2]
+        for j in [1..@width-2]
+          step3(i,j)
+      countleftright = 0
+      countrightleft = 0
+      for i in [0..@height-1]
+        for j in [0..@width-1]
+         if complabel[i][j] isnt labels[i][j] then break
+         else countleftright++
+      if countleftright is N
+        scan_step3 = 0
+      else
+        for i in [0..@height-1]
+          for j in [0..@width-1]
+            complabel[i][j] = labels[i][j] 
+        for i in [@height-2..1]
+          for j in [@width-2..1]
+            step3(i,j)
+        for i in [0..@height-1]
+          for j in [0..@width-1]
+            if complabel[i][j] isnt labels[i][j] then break
+            else countrightleft++
+        if countrightleft is N then scan_step3 is 0
+    max = labels[0][0]
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        if labels[i][j] > max
+          max = labels[i][j]
+    out = @getArray()
+    a = 0
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        if labels[i][j] is 0
+          out.data[a] = 255
+          out.data[a+1] = 255
+          out.data[a+2] = 255
+          out.data[a+3] = 255
+        else
+          out.data[a] = 0
+          out.data[a+1] = 0
+          out.data[a+2] = 0
+          out.data[a+3] = 255
+        
+        a+=4
+    return new Image(out)    
