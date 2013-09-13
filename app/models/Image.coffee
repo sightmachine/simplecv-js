@@ -1641,4 +1641,99 @@ module.exports = class Image extends Model
           out.data[a+3] = 255
         
         a+=4
-    return new Image(out)    
+    return new Image(out)
+    
+  sinTable:()=>
+    numOfAngles = 360
+    x = Array(numOfAngles)
+    theta = 0
+    thetaIndex = 0
+    while thetaIndex < numOfAngles
+      x[thetaIndex] = Math.sin(theta)
+      theta += Math.PI / numOfAngles
+      thetaIndex++
+    return x
+    
+  cosTable:()=>
+    numOfAngles = 360
+    x = Array(numOfAngles)
+    theta = 0
+    thetaIndex = 0
+    while thetaIndex < numOfAngles
+      x[thetaIndex] = Math.cos(theta)
+      theta += Math.PI / numOfAngles
+      thetaIndex++
+    return x
+    
+  houghLines:(maxValue = 100)=>
+    edge = @canny(100,50,5)
+    col  = edge.getMatrix()
+    greyinf = [] ; x = []
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        x.push (col[i][j][0]+col[i][j][1]+col[i][j][2])/3
+      greyinf.push x
+      x = []
+    numOfAngles = 181
+    rhoMax = Math.floor(Math.sqrt(2) * Math.max(@height, @width)) / 2
+    accum = []
+    c = []
+    doubleHeight = 2*rhoMax 
+    for i in [0..numOfAngles-1]
+      for j in [0..doubleHeight-1]
+        c.push 0
+      accum.push c
+      c = []
+    cosTable = @cosTable()
+    sinTable = @sinTable()
+    centerX = @width/2
+    centerY = @height/2
+    for i in [0..@width-1]
+      for j in [0..@height-1]
+        if greyinf[j][i] isnt 0
+          x = i - centerX
+          y = j - centerY
+          rho = 0
+          thetaIndex = 0
+          while thetaIndex < numOfAngles
+            rho1 = rhoMax + x * cosTable[thetaIndex] + y * sinTable[thetaIndex]
+            rho = Math.floor(rho1)
+            if rho > 0 and rho < doubleHeight
+              accum[thetaIndex][rho]++
+            thetaIndex++
+    maxTheta = 0
+    maxRho = 0
+    dl = edge.addDrawingLayer()
+    dl.stroke(204, 102, 0)
+    for z in [0..180]
+      for y in [4..doubleHeight-5]
+        if accum[z][y] > maxValue
+          a = false
+          peak = accum[z][y]
+          for dz in [-4..4]
+            for dy in [-4..4]
+              dt = z + dz
+              dr = y + dy
+              if dt < 0
+                dt = dt + 180
+              if dt >= 180
+                dt = dt - 180
+              if accum[dt][dr] > peak                
+                a = true
+          if a isnt true
+            maxTheta = z
+            maxRho = y
+            maxRadians = (maxTheta*Math.PI)/180
+            x1=0;x2=0;y1=0;y2=0
+            if (maxRadians  < Math.PI * 0.25 or maxRadians  > Math.PI * 0.75) 
+              x1=0; y1=0
+              x2=0; y2=@height-1
+              x1= Math.floor ((((maxRho - rhoMax) - ((y1 - centerY) * sinTable[maxTheta])) / cosTable[maxTheta]) + centerX)
+              x2= Math.floor ((((maxRho - rhoMax) - ((y2 - centerY) * sinTable[maxTheta])) / cosTable[maxTheta]) + centerX)
+            else 
+              x1=0; y1=0
+              x2=@width-1; y2=0
+              y1= Math.floor ((((maxRho - rhoMax) - ((x1 - centerX) * cosTable[maxTheta])) / sinTable[maxTheta]) + centerY)
+              y2= Math.floor ((((maxRho - rhoMax) - ((x2 - centerX) * cosTable[maxTheta])) / sinTable[maxTheta]) + centerY)
+            dl.line(x1,y1,x2,y2)
+    return edge
