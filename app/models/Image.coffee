@@ -1749,10 +1749,10 @@ module.exports = class Image extends Model
       message = JSON.stringify({'text':message})
     pixelCount = @width*@height
     if (message.length+1)*16 > pixelCount*4*0.75
-      alert "message is too big for the image"
+      console.error "message is too big for the image"
       return
     if message.length >maxMessageSize
-      alert "Message too big"
+      console.error "Message too big"
       return
     imgData = @getArray()
     getBit = (number, location) ->
@@ -1800,13 +1800,6 @@ module.exports = class Image extends Model
         pos++      
     encodeMessage(imgData.data, sjcl.hash.sha256.hash(password), message)
     encodedImage = new Image(imgData)
-    newCanvas = document.createElement("canvas")
-    newCanvas.width = encodedImage.width
-    newCanvas.height = encodedImage.height
-    newctx = newCanvas.getContext("2d")
-    newctx.putImageData(imgData,0,0)
-    image = newCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream")
-    window.location.href = image
     return encodedImage
   
   # A steganography decoding function to decode an encoded image to obtain the encoded message
@@ -1858,13 +1851,14 @@ module.exports = class Image extends Model
       obj = JSON.parse(message)
     catch e
       if password.length > 0
-        alert passwordFail
+        console.error passwordFail
+      else console.error "failed to parse"  
     if obj
       if obj.ct
         try
           obj.text = sjcl.decrypt(password, message)
         catch e 
-          alert passwordFail
+          console.error passwordFail
     escChars =
       "&": "&amp;"
       "<": "&lt;"
@@ -1876,6 +1870,5 @@ module.exports = class Image extends Model
     escHtml = (string) ->
       String(string).replace /[&<>"'\/\n]/g, (c) ->
         escChars[c]
-    alert escHtml(obj.text)
-    return @
+    return escHtml(obj.text)
     
