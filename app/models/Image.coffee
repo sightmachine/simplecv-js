@@ -1742,13 +1742,11 @@ module.exports = class Image extends Model
   
   # This function steganographically encodes an image with a message and a password and downloads the image  
   stegaEncode:(message='',password='')=>
-    console.log "in encode"
     maxMessageSize = 1000
     if password.length > 0 
       message = sjcl.encrypt(password,message)
     else
       message = JSON.stringify({'text':message})
-    console.log "first part"  
     pixelCount = @width*@height
     if (message.length+1)*16 > pixelCount*4*0.75
       alert "message is too big for the image"
@@ -1756,7 +1754,6 @@ module.exports = class Image extends Model
     if message.length >maxMessageSize
       alert "Message too big"
       return
-    console.log "checked message length"  
     imgData = @getArray()
     getBit = (number, location) ->
       (number >> location) & 1
@@ -1802,22 +1799,18 @@ module.exports = class Image extends Model
         colors[loc] = 255
         pos++      
     encodeMessage(imgData.data, sjcl.hash.sha256.hash(password), message)
-    console.log "It appears encoded"
     encodedImage = new Image(imgData)
     newCanvas = document.createElement("canvas")
     newCanvas.width = encodedImage.width
     newCanvas.height = encodedImage.height
     newctx = newCanvas.getContext("2d")
     newctx.putImageData(imgData,0,0)
-    console.log "made a new canvas"
     image = newCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream")
     window.location.href = image
-    console.log "Encoded successfully"
     return encodedImage
   
   # A steganography decoding function to decode an encoded image to obtain the encoded message
   stegaDecode:(password='')=>
-    console.log "in decode"
     maxMessageSize = 1000
     passwordFail = 'Password is incorrect or there is nothing here.'
     out = @getArray()
@@ -1859,7 +1852,6 @@ module.exports = class Image extends Model
         message.push String.fromCharCode(code)
         i++
       message.join ""
-    console.log "the real inn"  
     message = decodeMessage(out.data, sjcl.hash.sha256.hash(password))
     obj = null
     try
@@ -1873,7 +1865,6 @@ module.exports = class Image extends Model
           obj.text = sjcl.decrypt(password, message)
         catch e 
           alert passwordFail
-    console.log "passed the hurdles"      
     escChars =
       "&": "&amp;"
       "<": "&lt;"
