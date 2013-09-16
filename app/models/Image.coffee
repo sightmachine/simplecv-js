@@ -1641,4 +1641,234 @@ module.exports = class Image extends Model
           out.data[a+3] = 255
         
         a+=4
-    return new Image(out)    
+    return new Image(out)
+    
+  #A sine lookup table for use in Hough methods
+  sinTable:()=>
+    numOfAngles = 360
+    x = Array(numOfAngles)
+    theta = 0
+    thetaIndex = 0
+    while thetaIndex < numOfAngles
+      x[thetaIndex] = Math.sin(theta)
+      theta += Math.PI / numOfAngles
+      thetaIndex++
+    return x
+  #A cosine lookup table for use in Hough methods  
+  cosTable:()=>
+    numOfAngles = 360
+    x = Array(numOfAngles)
+    theta = 0
+    thetaIndex = 0
+    while thetaIndex < numOfAngles
+      x[thetaIndex] = Math.cos(theta)
+      theta += Math.PI / numOfAngles
+      thetaIndex++
+    return x
+    
+  # Hough lines method for detecting lines
+  houghLines:(maxValue = 100)=>
+    edge = @canny(100,50,5)
+    col  = edge.getMatrix()
+    greyinf = [] ; x = []
+    for i in [0..@height-1]
+      for j in [0..@width-1]
+        x.push (col[i][j][0]+col[i][j][1]+col[i][j][2])/3
+      greyinf.push x
+      x = []
+    numOfAngles = 181
+    rhoMax = Math.floor(Math.sqrt(2) * Math.max(@height, @width)) / 2
+    accum = []
+    c = []
+    doubleHeight = 2*rhoMax 
+    for i in [0..numOfAngles-1]
+      for j in [0..doubleHeight-1]
+        c.push 0
+      accum.push c
+      c = []
+    cosTable = @cosTable()
+    sinTable = @sinTable()
+    centerX = @width/2
+    centerY = @height/2
+    for i in [0..@width-1]
+      for j in [0..@height-1]
+        if greyinf[j][i] isnt 0
+          x = i - centerX
+          y = j - centerY
+          rho = 0
+          thetaIndex = 0
+          while thetaIndex < numOfAngles
+            rho1 = rhoMax + x * cosTable[thetaIndex] + y * sinTable[thetaIndex]
+            rho = Math.floor(rho1)
+            if rho > 0 and rho < doubleHeight
+              accum[thetaIndex][rho]++
+            thetaIndex++
+    maxTheta = 0
+    maxRho = 0
+    dl = edge.addDrawingLayer()
+    dl.stroke(204, 102, 0)
+    for z in [0..180]
+      for y in [4..doubleHeight-5]
+        if accum[z][y] > maxValue
+          a = false
+          peak = accum[z][y]
+          for dz in [-4..4]
+            for dy in [-4..4]
+              dt = z + dz
+              dr = y + dy
+              if dt < 0
+                dt = dt + 180
+              if dt >= 180
+                dt = dt - 180
+              if accum[dt][dr] > peak                
+                a = true
+          if a isnt true
+            maxTheta = z
+            maxRho = y
+            maxRadians = (maxTheta*Math.PI)/180
+            x1=0;x2=0;y1=0;y2=0
+            if (maxRadians  < Math.PI * 0.25 or maxRadians  > Math.PI * 0.75) 
+              x1=0; y1=0
+              x2=0; y2=@height-1
+              x1= Math.floor ((((maxRho - rhoMax) - ((y1 - centerY) * sinTable[maxTheta])) / cosTable[maxTheta]) + centerX)
+              x2= Math.floor ((((maxRho - rhoMax) - ((y2 - centerY) * sinTable[maxTheta])) / cosTable[maxTheta]) + centerX)
+            else 
+              x1=0; y1=0
+              x2=@width-1; y2=0
+              y1= Math.floor ((((maxRho - rhoMax) - ((x1 - centerX) * cosTable[maxTheta])) / sinTable[maxTheta]) + centerY)
+              y2= Math.floor ((((maxRho - rhoMax) - ((x2 - centerX) * cosTable[maxTheta])) / sinTable[maxTheta]) + centerY)
+            dl.line(x1,y1,x2,y2)
+    return edge
+  
+  # This function steganographically encodes an image with a message and a password and downloads the image  
+  stegaEncode:(message='',password='')=>
+    maxMessageSize = 1000
+    if password.length > 0 
+      message = sjcl.encrypt(password,message)
+    else
+      message = JSON.stringify({'text':message})
+    pixelCount = @width*@height
+    if (message.length+1)*16 > pixelCount*4*0.75
+      console.error "message is too big for the image"
+      return
+    if message.length >maxMessageSize
+      console.error "Message too big"
+      return
+    imgData = @getArray()
+    getBit = (number, location) ->
+      (number >> location) & 1
+    getBitsFromNumber = (number) ->
+      bits = []
+      i = 0
+      while i < 16
+        bits.push getBit(number, i)
+        i++
+      bits
+    getNextLocation = (history, hash, total) ->
+      pos = history.length
+      loc = Math.abs(hash[pos % hash.length] * (pos + 1)) % total
+      loop
+        if loc >= total
+          loc = 0
+        else if history.indexOf(loc) >= 0
+          loc++
+        else if (loc + 1) % 4 is 0
+          loc++
+        else
+          history.push loc
+          return loc 
+    setBit = (number, location, bit) ->
+      (number & ~(1 << location)) | (bit << location)
+    getMessageBits = (message) ->
+      messageBits = []
+      i = 0
+      while i < message.length
+        code = message.charCodeAt(i)
+        messageBits = messageBits.concat(getBitsFromNumber(code))
+        i++
+      messageBits      
+    encodeMessage = (colors, hash, message) ->
+      messageBits = getBitsFromNumber(message.length)
+      messageBits = messageBits.concat(getMessageBits(message))
+      history = []
+      pos = 0
+      while pos < messageBits.length
+        loc = getNextLocation(history, hash, colors.length)
+        colors[loc] = setBit(colors[loc], 0, messageBits[pos])
+        loc++  while (loc + 1) % 4 isnt 0
+        colors[loc] = 255
+        pos++      
+    encodeMessage(imgData.data, sjcl.hash.sha256.hash(password), message)
+    encodedImage = new Image(imgData)
+    return encodedImage
+  
+  # A steganography decoding function to decode an encoded image to obtain the encoded message
+  stegaDecode:(password='')=>
+    maxMessageSize = 1000
+    passwordFail = 'Password is incorrect or there is nothing here.'
+    out = @getArray()
+    getBit = (number, location) ->
+      (number >> location) & 1
+    setBit = (number, location, bit) ->
+      (number & ~(1 << location)) | (bit << location)
+    getNextLocation = (history, hash, total) ->
+      pos = history.length
+      loc = Math.abs(hash[pos % hash.length] * (pos + 1)) % total
+      loop
+        if loc >= total
+          loc = 0
+        else if history.indexOf(loc) >= 0
+          loc++
+        else if (loc + 1) % 4 is 0
+          loc++
+        else
+          history.push loc
+          return loc      
+    getNumberFromBits = (bytes, history, hash) ->
+      number = 0
+      pos = 0
+      while pos < 16
+        loc = getNextLocation(history, hash, bytes.length)
+        bit = getBit(bytes[loc], 0)
+        number = setBit(number, pos, bit)
+        pos++
+      number
+    decodeMessage = (colors, hash) ->
+      history = []
+      messageSize = getNumberFromBits(colors, history, hash)
+      return ""  if (messageSize + 1) * 16 > colors.length * 0.75
+      return ""  if messageSize is 0 or messageSize > maxMessageSize
+      message = []
+      i = 0
+      while i < messageSize
+        code = getNumberFromBits(colors, history, hash)
+        message.push String.fromCharCode(code)
+        i++
+      message.join ""
+    message = decodeMessage(out.data, sjcl.hash.sha256.hash(password))
+    obj = null
+    try
+      obj = JSON.parse(message)
+    catch e
+      if password.length > 0
+        console.error passwordFail
+      else console.error "failed to parse"  
+    if obj
+      if obj.ct
+        try
+          obj.text = sjcl.decrypt(password, message)
+        catch e 
+          console.error passwordFail
+    escChars =
+      "&": "&amp;"
+      "<": "&lt;"
+      ">": "&gt;"
+      "\"": "&quot;"
+      "'": "&#39;"
+      "/": "&#x2F;"
+      "\n": "<br/>"
+    escHtml = (string) ->
+      String(string).replace /[&<>"'\/\n]/g, (c) ->
+        escChars[c]
+    return escHtml(obj.text)
+    
