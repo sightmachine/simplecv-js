@@ -308,6 +308,42 @@ module.exports = class Image extends Model
       matrix.data[i+2] = 255 - matrix.data[i+2]
       i += 4
     return new Image(matrix)   
+
+  equalize:(level=256) =>
+    data = @getGrayArray()
+    # round the data values
+    for i, d of data
+      data[i] = Math.round(d)
+
+    res = []
+    for i in data
+      if res[i] isnt undefined
+        res[i]++
+      else
+        res[i] = 1
+
+    cdf = []
+    histval = 0
+    for key, val of res
+      histval += val
+      cdf[key] = histval
+
+    # Now, we obtain the equalizer
+    for key, val of cdf
+      cdfmin = val
+      break
+    area = @width * @height
+
+    hist = (v)->
+      ret = Math.round((cdf[v] - cdfmin)*(level-1)/(area - cdfmin))
+
+    matrix = @getArray()
+    i = 0; j = 0
+    while i < matrix.data.length
+      matrix.data[i] = matrix.data[i+1] = matrix.data[i+2] = hist(data[j])
+      i += 4
+      j += 1
+    return new Image(matrix)
  
   # Returns a greyscale image where black represents
   # exact color match and white represents an opposite
