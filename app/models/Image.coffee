@@ -1352,6 +1352,7 @@ module.exports = class Image extends Model
     for k in [0..255]
       b.push 0
     color = @getArray()
+    i = 0
     while i<color.data.length
       r[color.data[i]]++
       g[color.data[i+1]]++
@@ -1908,3 +1909,69 @@ module.exports = class Image extends Model
         escChars[c]
     return escHtml(obj.text)
     
+  whiteBalance:(thresh=0.003)=>
+    sz = @width * @height
+    [r, g, b] = @histogram()
+    for i in [1..255]
+      r[i] = r[i] + r[i-1]
+      g[i] = g[i] + g[i-1]
+      b[i] = b[i] + b[i-1]
+    # upper bounds
+    rub = bub = gub = 255
+    # lower bounds
+    rlb = blb = glb = -1
+
+    lower_thresh = upper_thresh = 0.0
+    while lower_thresh < thresh
+      blb += 1
+      lower_thresh = b[blb]/sz
+    while upper_thresh < thresh
+      bub -= 1
+      upper_thresh = (sz - b[bub])/sz
+
+    lower_thresh = upper_thresh = 0.0
+    while lower_thresh < thresh
+      glb += 1
+      lower_thresh = g[glb]/sz
+    while upper_thresh < thresh
+      gub -= 1
+      upper_thresh = (sz - g[gub])/sz
+
+    lower_thresh = upper_thresh = 0.0
+    while lower_thresh < thresh
+      rlb += 1
+      lower_thresh = r[rlb]/sz
+    while upper_thresh < thresh
+      rub -= 1
+      upper_thresh = (sz - r[rub])/sz
+
+    for i in [0..255]
+      if i < rlb
+        r[i] = 0
+      else if i > rub
+        r[i] = 255
+      else
+        r[i] = parseInt((i - rlb)*255/(rub - rlb))
+
+      if i < glb
+        g[i] = 0
+      else if i > gub
+        g[i] = 255
+      else
+        g[i] = parseInt((i - glb)*255/(gub - glb))
+
+      if i < blb
+        b[i] = 0
+      else if i > bub
+        b[i] = 255
+      else
+        b[i] = parseInt((i - blb)*255/(bub - blb))
+
+    image = @getArray()
+    i = 0
+    while i < image.data.length
+      image.data[i] = r[image.data[i]]
+      image.data[i+1] = g[image.data[i+1]]
+      image.data[i+2] = b[image.data[i+2]]
+      i += 4
+    return new Image(image)
