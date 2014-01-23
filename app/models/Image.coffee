@@ -274,7 +274,7 @@ module.exports = class Image extends Model
     i = 0;
     while i < matrix.data.length
       avg = (matrix.data[i] + matrix.data[i+1] + matrix.data[i+2]) / 3
-      out.push avg
+      out.push Math.round(avg)
       i += 4
     return out
        
@@ -1975,3 +1975,91 @@ module.exports = class Image extends Model
       image.data[i+2] = b[image.data[i+2]]
       i += 4
     return new Image(image)
+
+  logicalOR:(img, grayscale=true)=>
+    # Perform bitwise AND on images
+    # Example usage:
+    # img1 = new Image(source1)
+    # img2 = new Image(source2)
+    # i = img1.logicalOR(img2)
+
+    if grayscale
+      arr_one = @getGrayArray()
+      arr_two = img.getGrayArray()
+      ret_arr = @getArray()
+      i = 0; j = 0
+      while i < ret_arr.data.length
+        ret_arr.data[i] = ret_arr.data[i+1] = ret_arr.data[i+2] = \
+        arr_one[j] | arr_two[j]
+        i += 4
+        j += 1
+      return new Image(ret_arr)
+    else
+      ret_arr = arr_one = @getArray()
+      arr_two = img.getArray()
+      i = 0
+      while i < ret_arr.data.length
+        ret_arr.data[i] = arr_one.data[i] | arr_two.data[i]
+        ret_arr.data[i+1] = arr_one.data[i+1] | arr_two.data[i+1]
+        ret_arr.data[i+2] = arr_one.data[i+2] | arr_two.data[i+2]
+        i += 4
+
+      return new Image(ret_arr)
+
+  logicalAND:(img, grayscale=true)=>
+    # Perform bitwise AND on images
+    # Example usage:
+    # img1 = new Image(source1)
+    # img2 = new Image(source2)
+    # i = img1.logicalAND(img2)
+
+    if grayscale
+      arr_one = @getGrayArray()
+      arr_two = img.getGrayArray()
+      ret_arr = @getArray()
+      i = 0; j = 0
+      while i < ret_arr.data.length
+        ret_arr.data[i] = ret_arr.data[i+1] = ret_arr.data[i+2] = \
+        arr_one[j] & arr_two[j]
+        i += 4
+        j += 1
+      return new Image(ret_arr)
+    else
+      ret_arr = arr_one = @getArray()
+      arr_two = img.getArray()
+      i = 0
+      while i < ret_arr.data.length
+        ret_arr.data[i] = arr_one.data[i] & arr_two.data[i]
+        ret_arr.data[i+1] = arr_one.data[i+1] & arr_two.data[i+1]
+        ret_arr.data[i+2] = arr_one.data[i+2] & arr_two.data[i+2]
+        i += 4
+      return new Image(ret_arr)
+
+  logicalXOR:(img, grayscale=true)=>
+    # Perform bitwise AND on images
+    # Example usage:
+    # img1 = new Image(source1)
+    # img2 = new Image(source2)
+    # i = img1.logicalAND(img2)
+
+    if grayscale
+      arr_one = @getGrayArray()
+      arr_two = img.getGrayArray()
+      ret_arr = @getArray()
+      i = 0; j = 0
+      while i < ret_arr.data.length
+        ret_arr.data[i] = ret_arr.data[i+1] = ret_arr.data[i+2] = \
+        arr_one[j] ^ arr_two[j]
+        i += 4
+        j += 1
+      return new Image(ret_arr)
+    else
+      ret_arr = arr_one = @getArray()
+      arr_two = img.getArray()
+      i = 0
+      while i < ret_arr.data.length
+        ret_arr.data[i] = arr_one.data[i] ^ arr_two.data[i]
+        ret_arr.data[i+1] = arr_one.data[i+1] ^ arr_two.data[i+1]
+        ret_arr.data[i+2] = arr_one.data[i+2] ^ arr_two.data[i+2]
+        i += 4
+      return new Image(ret_arr)
