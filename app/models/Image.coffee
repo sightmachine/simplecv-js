@@ -2063,3 +2063,35 @@ module.exports = class Image extends Model
         ret_arr.data[i+2] = arr_one.data[i+2] ^ arr_two.data[i+2]
         i += 4
       return new Image(ret_arr)
+
+  rotate:(angle)=>
+    # angle to be in radians
+    obj = this
+    sketch = (p)->
+      p.setup = ->
+        p.size(obj.width, obj.height)
+        p.background(255)
+
+      p.draw = ->
+        p.translate(obj.width/2, obj.height/2)
+        p.rotate(angle)
+        img = p.createImage(obj.width, obj.height, p.RGB);
+        i = 0; j = 0
+        d = obj.getArray().data
+        len = img.pixels.getLength()
+        while j < len
+          img.pixels.setPixel(j, p.color(d[i], d[i+1], d[i+2]))
+          i += 4
+          j += 1
+        p.image(img, -obj.width/2, -obj.height/2)
+        p.noLoop()
+
+      p.draw()
+
+    canvas = document.createElement("canvas")
+    canvas.height = @height
+    canvas.width = @width
+    instance = new Processing(canvas, sketch)
+    ctx = canvas.getContext("2d")
+
+    return new Image(ctx.getImageData(0, 0, @width, @height))
